@@ -7,14 +7,15 @@ fu! s:toggle_settings(...) abort "{{{1
     elseif a:0 == 2
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] =
           \ [ a:1, a:2, 'setl '.a:1, 'setl no'.a:1, '['.a:1.'] ON', '['.a:1.'] OFF', '&l:'.a:1 ]
-
     else
         return
     endif
 
-    let rhs3 = 'if '.test.'<bar>exe "'.cmd2.'"<bar>echo "'.msg2
-       \ .'"<bar>else<bar>exe "'.cmd1.'"<bar>echo "'.msg1
-       \ .'"<bar>endif'
+    let rhs3 = 'if '.test
+            \ .'<bar>    exe "'.cmd2.'"<bar>echo "'.msg2.'"'
+            \ .'<bar>else'
+            \ .'<bar>    exe "'.cmd1.'"<bar>echo "'.msg1.'"'
+            \ .'<bar>endif'
 
     exe 'nno <silent> [o'.letter
     \.  ' :<c-u>'.cmd1
@@ -34,6 +35,7 @@ fu! s:toggle_settings(...) abort "{{{1
 
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
 endfu
+
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
 fu! s:toggle_matchparen(enable) abort "{{{1
@@ -107,7 +109,7 @@ TS number
 "     fu! s:toggle_numbers() abort
 "         " The key '01' (state) is not necessary because no command in the dictionary
 "         " brings us to it.
-"         " However, if we got in this state by accident, hitting the mapping would raises
+"         " However, if we got in this state by accident, hitting the mapping would raise
 "         " an error (E716: Key not present in Dictionary).
 "         " So, we include it, and give it a value which brings us to state '11'.
 "
