@@ -85,8 +85,8 @@ TS formatoptions
                 \ f
                 \ setl\ fo+=t\ fo+=c
                 \ setl\ fo-=t\ fo-=c
-                \ +t\ +c\ auto-wrap
-                \ -t\ -c\ NO\ auto-wrap
+                \ +t\ +c\ auto-wrap\ ON
+                \ -t\ -c\ auto-wrap\ OFF
                 \ count(split(&l:fo,'\\zs'),'c')
 
 TS number
