@@ -1,3 +1,29 @@
+if exists('g:loaded_toggle_settings')
+    finish
+endif
+let g:loaded_toggle_settings = 1
+
+fu! s:toggle_cursorline(enable) abort "{{{1
+" 'cursorline' only in the active window and not in insert mode.
+    if a:enable
+        setl cursorline
+        augroup my_cursorline
+            au!
+            au VimEnter,WinEnter * setl cursorline
+            au WinLeave          * setl nocursorline
+            au InsertEnter       * setl nocursorline
+            au InsertLeave       * setl cursorline
+        augroup END
+        let g:loaded_toggle_settings = 1
+    else
+        setl nocursorline
+        sil! au! my_cursorline
+        sil! aug! my_cursorline
+        unlet! g:loaded_toggle_settings
+    endif
+endfu
+call s:toggle_cursorline(0)
+
 fu! s:toggle_settings(...) abort "{{{1
     if a:0 == 7
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
@@ -88,6 +114,14 @@ TS formatoptions
                 \ +t\ +c\ auto-wrap\ ON
                 \ -t\ -c\ auto-wrap\ OFF
                 \ count(split(&l:fo,'\\zs'),'c')
+
+TS cursorline
+                \ l
+                \ call\ <sid>toggle_cursorline(1)
+                \ call\ <sid>toggle_cursorline(0)
+                \ ON
+                \ OFF
+                \ exists('g:loaded_toggle_settings')
 
 TS number
                 \ n
