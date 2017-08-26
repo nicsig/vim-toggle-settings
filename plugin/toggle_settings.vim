@@ -182,8 +182,8 @@ TS spelllang
 
 TS fold\ title
                 \ t
-                \ let\ b:my_title_full=1
-                \ let\ b:my_title_full=0
+                \ let\ b:my_title_full=1\|redraw!
+                \ let\ b:my_title_full=0\|redraw!
                 \ full
                 \ short
                 \ get(b:,'my_title_full',0)
