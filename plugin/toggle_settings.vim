@@ -15,12 +15,12 @@ fu! s:toggle_cursorline(enable) abort "{{{2
             au InsertEnter       * setl nocursorline
             au InsertLeave       * setl cursorline
         augroup END
-        let g:loaded_toggle_settings = 1
+        let g:my_cursorline = 1
     else
         setl nocursorline
         sil! au! my_cursorline
         sil! aug! my_cursorline
-        unlet! g:loaded_toggle_settings
+        unlet! g:my_cursorline
     endif
 endfu
 call s:toggle_cursorline(0)
@@ -141,8 +141,8 @@ TS auto\ open\ folds
                 \ OFF
                 \ exists('g:toggle_folds_map_save')
 
-" NOTE: We can't use a script-local variable, because I don't know how to
-" check its existence from a mapping:
+" NOTE: We can't use a script-local variable, because we can't access it from
+" a mapping:
 "
 "         exists('s:toggle_folds_map_save')       ✘
 "         exists('<sid>toggle_folds_map_save')    ✘
@@ -153,7 +153,7 @@ TS cursorline
                 \ call\ <sid>toggle_cursorline(0)
                 \ ON
                 \ OFF
-                \ exists('g:loaded_toggle_settings')
+                \ exists('g:my_cursorline')
 
 TS number
                 \ n
