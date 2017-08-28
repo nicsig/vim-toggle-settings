@@ -3,7 +3,8 @@ if exists('g:loaded_toggle_settings')
 endif
 let g:loaded_toggle_settings = 1
 
-fu! s:toggle_cursorline(enable) abort "{{{1
+" Functions {{{1
+fu! s:toggle_cursorline(enable) abort "{{{2
 " 'cursorline' only in the active window and not in insert mode.
     if a:enable
         setl cursorline
@@ -24,7 +25,27 @@ fu! s:toggle_cursorline(enable) abort "{{{1
 endfu
 call s:toggle_cursorline(0)
 
-fu! s:toggle_settings(...) abort "{{{1
+fu! s:toggle_folds(enable) abort "{{{2
+    if a:enable
+        let g:toggle_folds_map_save = myfuncs#mappings_save(['j', 'k'], 'n', 1)
+        nno <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
+        nno <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
+    else
+        if exists('g:toggle_folds_map_save')
+            call myfuncs#mappings_restore(g:toggle_folds_map_save)
+            unlet! g:toggle_folds_map_save
+        endif
+    endif
+endfu
+
+fu! s:toggle_matchparen(enable) abort "{{{2
+    let cur_win = winnr()
+    " commands defined in `$VIMRUNTIME/plugin/matchparen.vim`
+    exe a:enable ? 'DoMatchParen' : 'NoMatchParen'
+    exe cur_win.'wincmd w'
+endfu
+
+fu! s:toggle_settings(...) abort "{{{2
     if a:0 == 7
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
         let msg1 = '['.label.'] '.msg1
@@ -64,14 +85,8 @@ endfu
 
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
-fu! s:toggle_matchparen(enable) abort "{{{1
-    let cur_win = winnr()
-    " commands defined in `$VIMRUNTIME/plugin/matchparen.vim`
-    exe a:enable ? 'DoMatchParen' : 'NoMatchParen'
-    exe cur_win.'wincmd w'
-endfu
-
-" Simple settings "{{{1
+" Mappings {{{1
+" Simple "{{{2
 
 TS  hlsearch      h
 TS  list          i
@@ -81,7 +96,7 @@ TS  showcmd       o
 TS  spell         s
 TS  wrap          w
 
-" Complex settings {{{1
+" Complex {{{2
 
 TS showbreak
                 \ b
@@ -114,6 +129,20 @@ TS formatoptions
                 \ +t\ +c\ auto-wrap\ ON
                 \ -t\ -c\ auto-wrap\ OFF
                 \ count(split(&l:fo,'\\zs'),'c')
+
+TS auto\ open\ folds
+                \ F
+                \ call\ <sid>toggle_folds(1)
+                \ call\ <sid>toggle_folds(0)
+                \ ON
+                \ OFF
+                \ exists('g:toggle_folds_map_save')
+
+" NOTE: We can't use a script-local variable, because I don't know how to
+" check its existence from a mapping:
+"
+"         exists('s:toggle_folds_map_save')       ✘
+"         exists('<sid>toggle_folds_map_save')    ✘
 
 TS cursorline
                 \ l
