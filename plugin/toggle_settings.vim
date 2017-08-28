@@ -27,9 +27,12 @@ call s:toggle_cursorline(0)
 
 fu! s:toggle_folds(enable) abort "{{{2
     if a:enable
-        let g:toggle_folds_map_save = myfuncs#mappings_save(['j', 'k'], 'n', 1)
+        let g:toggle_folds_map_save = myfuncs#mappings_save(['j', 'k', 'gg', 'G'], 'n', 1)
         nno <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
         nno <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
+
+        nno <silent> gg ggzMzv
+        nno <silent> G  GzMzv
     else
         if exists('g:toggle_folds_map_save')
             call myfuncs#mappings_restore(g:toggle_folds_map_save)
