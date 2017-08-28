@@ -61,7 +61,7 @@ fu! s:toggle_settings(...) abort "{{{2
         return
     endif
 
-    let rhs3 = 'if '.test
+    let rhs3 =      'if '.test
             \ .'<bar>    exe "'.cmd2.'"<bar>echo "'.msg2.'"'
             \ .'<bar>else'
             \ .'<bar>    exe "'.cmd1.'"<bar>echo "'.msg1.'"'
