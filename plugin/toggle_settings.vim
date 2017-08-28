@@ -27,6 +27,8 @@ call s:toggle_cursorline(0)
 
 fu! s:toggle_folds(enable) abort "{{{2
     if a:enable
+        " `<nowait>` seems to make Vim slow when we press and maintain the
+        " mappings. So, don't add it.
         nno <buffer> <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
         nno <buffer> <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
 
