@@ -27,17 +27,16 @@ call s:toggle_cursorline(0)
 
 fu! s:toggle_folds(enable) abort "{{{2
     if a:enable
-        let g:toggle_folds_map_save = myfuncs#mappings_save(['j', 'k', 'gg', 'G'], 'n', 1)
-        nno <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
-        nno <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
+        nno <buffer> <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
+        nno <buffer> <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
 
-        nno <silent> gg ggzMzv
-        nno <silent> G  GzMzv
+        nno <buffer> <silent> gg ggzMzv
+        nno <buffer> <silent> G  GzMzv
     else
-        if exists('g:toggle_folds_map_save')
-            call myfuncs#mappings_restore(g:toggle_folds_map_save)
-            unlet! g:toggle_folds_map_save
-        endif
+        nunmap <buffer> j
+        nunmap <buffer> k
+        nunmap <buffer> gg
+        nunmap <buffer> G
     endif
 endfu
 
@@ -139,13 +138,7 @@ TS auto\ open\ folds
                 \ call\ <sid>toggle_folds(0)
                 \ ON
                 \ OFF
-                \ exists('g:toggle_folds_map_save')
-
-" NOTE: We can't use a script-local variable, because we can't access it from
-" a mapping:
-"
-"         exists('s:toggle_folds_map_save')       ✘
-"         exists('<sid>toggle_folds_map_save')    ✘
+                \ !empty(maparg('gg','n'))
 
 TS cursorline
                 \ l
@@ -154,6 +147,13 @@ TS cursorline
                 \ ON
                 \ OFF
                 \ exists('g:my_cursorline')
+
+" NOTE: We can't use a script-local variable, because we can't access it from
+" a mapping:
+"
+"         exists('s:my_cursorline')       ✘
+"         exists('<sid>my_cursorline')    ✘
+
 
 TS number
                 \ n
@@ -227,3 +227,4 @@ TS virtualedit
                 \ ALL
                 \ ø
                 \ !empty(&ve)
+
