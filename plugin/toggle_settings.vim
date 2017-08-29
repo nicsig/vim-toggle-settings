@@ -34,6 +34,7 @@ fu! s:toggle_folds(enable) abort "{{{2
 
         nno <buffer> <silent> gg ggzMzv
         nno <buffer> <silent> G  GzMzv
+        norm! zMzv
     else
         nunmap <buffer> j
         nunmap <buffer> k
