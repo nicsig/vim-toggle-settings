@@ -26,20 +26,35 @@ endfu
 call s:toggle_cursorline(0)
 
 fu! s:toggle_folds(enable) abort "{{{2
+    let keys = [
+               \ 'j',
+               \ 'k',
+               \ 'gg',
+               \ 'G',
+               \ '[z',
+               \ ']z',
+               \ "\<c-d>",
+               \ "\<c-u>",
+               \ '{',
+               \ '}'
+               \ ]
+
     if a:enable
         " `<nowait>` seems to make Vim slow when we press and maintain the
         " mappings. So, don't add it.
+        for l:key in keys
+            exe 'nno <buffer> <silent> '.l:key.' zR'.l:key.'zMzv'
+        endfor
+
+        " `j` and `k` are special:  re-define them
         nno <buffer> <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
         nno <buffer> <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
 
-        nno <buffer> <silent> gg ggzMzv
-        nno <buffer> <silent> G  GzMzv
         norm! zMzv
     else
-        nunmap <buffer> j
-        nunmap <buffer> k
-        nunmap <buffer> gg
-        nunmap <buffer> G
+        for l:key in keys
+            exe 'nunmap <buffer> '.l:key
+        endfor
     endif
 endfu
 
