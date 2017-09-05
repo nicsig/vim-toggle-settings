@@ -60,20 +60,8 @@ endfu
 
 fu! s:toggle_matchparen(enable) abort "{{{2
     let cur_win = winnr()
-    " commands defined in `$VIMRUNTIME/plugin/matchparen.vim`
-    if a:enable
-        DoMatchParen
-        au! default_cursor_moved
-        aug! default_cursor_moved
-    else
-        NoMatchParen
-        " We need to always have at least one autocmd listening to `CursorMoved`.
-        " For an explanation of the issue, see:
-        "         https://github.com/vim/vim/issues/2053#issuecomment-327004968
-        augroup default_cursor_moved
-            au!
-            au CursorMoved * "
-        augroup END
+    if filereadable($HOME.'/.vim/after/other_plugin/matchparen.vim')
+        so ~/.vim/after/other_plugin/matchparen.vim
     endif
     exe cur_win.'wincmd w'
 endfu
