@@ -128,12 +128,20 @@ TS showbreak
                 \ !empty(&sbr)
 
 TS colorscheme
-                \ c
+                \ C
                 \ colo\ my_seoul_light
                 \ colo\ my_seoul_dark
                 \ light
                 \ dark
                 \ g:colors_name=~?'light'
+
+TS conceal
+                \ c
+                \ setl\ cole=3
+                \ setl\ cole=2
+                \ Full
+                \ Partial
+                \ &l:cole==3
 
 TS diff
                 \ d
