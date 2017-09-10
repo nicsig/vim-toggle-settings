@@ -137,11 +137,11 @@ TS colorscheme
 
 TS conceal
                 \ c
-                \ setl\ cole=3
                 \ setl\ cole=2
+                \ setl\ cole=3
                 \ Full
                 \ Partial
-                \ &l:cole==3
+                \ &l:cole==2
 
 TS diff
                 \ d
