@@ -139,8 +139,8 @@ TS conceal
                 \ c
                 \ setl\ cole=2
                 \ setl\ cole=3
-                \ Full
                 \ Partial
+                \ Full
                 \ &l:cole==2
 
 TS diff
