@@ -109,11 +109,11 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 " Mappings {{{1
 " Simple "{{{2
 
+TS  cursorcolumn  o
+TS  cursorline    l
 TS  hlsearch      h
 TS  list          i
-TS  cursorline    l
-TS  cursorcolumn  L
-TS  showcmd       o
+TS  showcmd       W
 TS  spell         s
 TS  wrap          w
 
