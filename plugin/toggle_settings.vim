@@ -153,10 +153,10 @@ TS diff
 
 TS formatoptions
                 \ f
-                \ setl\ fo+=t\ fo+=c
-                \ setl\ fo-=t\ fo-=c
-                \ +t\ +c\ auto-wrap\ ON
-                \ -t\ -c\ auto-wrap\ OFF
+                \ setl\ fo+=c
+                \ setl\ fo-=c
+                \ +c:\ auto-wrap\ comments\ ON
+                \ -c:\ auto-wrap\ comments\ OFF
                 \ count(split(&l:fo,'\\zs'),'c')
 
 TS auto\ open\ folds
