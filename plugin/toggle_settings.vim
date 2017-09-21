@@ -112,7 +112,7 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 TS  cursorcolumn  o
 TS  cursorline    l
 TS  hlsearch      h
-TS  list          i
+TS  list          I
 TS  showcmd       W
 TS  spell         s
 TS  wrap          w
