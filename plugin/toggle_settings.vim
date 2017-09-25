@@ -1,3 +1,8 @@
+" TODO:
+" Refactor the code so that `con` doesn't show any message.
+" Currently it displays `[NUMBER] on`.
+" But we know they're on. They're visible.
+
 if exists('g:loaded_toggle_settings')
     finish
 endif
