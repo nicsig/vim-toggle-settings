@@ -134,8 +134,8 @@ TS showbreak
 
 TS colorscheme
                 \ C
-                \ colo\ my_seoul_light
-                \ colo\ my_seoul_dark
+                \ colo\ my_seoul_light<bar>call\ <sid>toggle_cursorline(0)
+                \ colo\ my_seoul_dark<bar>call\ <sid>toggle_cursorline(1)
                 \ light
                 \ dark
                 \ g:colors_name=~?'light'
