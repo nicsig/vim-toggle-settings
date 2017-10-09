@@ -162,7 +162,7 @@ TS formatoptions
                 \ setl\ fo-=c
                 \ +c:\ auto-wrap\ comments\ ON
                 \ -c:\ auto-wrap\ comments\ OFF
-                \ count(split(&l:fo,'\\zs'),'c')
+                \ index(split(&l:fo,'\\zs'),'c') != -1
 
 TS auto\ open\ folds
                 \ F
@@ -226,7 +226,7 @@ TS nrformats
                 \ setl\ nf-=alpha
                 \ +alpha
                 \ -alpha
-                \ count(split(&l:nf,','),'alpha')
+                \ index(split(&l:nf,','),'alpha') != -1
 
 TS MatchParen
                 \ p
