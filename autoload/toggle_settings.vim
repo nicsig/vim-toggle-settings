@@ -291,4 +291,3 @@ TS virtualedit
                 \ ALL
                 \ ø
                 \ !empty(&ve)
-

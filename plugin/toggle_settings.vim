@@ -5,14 +5,14 @@ let g:loaded_toggle_settings = 1
 
 " Mappings {{{1
 
-nmap                  co                                    <plug>(my_lazy_load_co)
-nmap <expr> <silent>  <plug>(my_lazy_load_co)  <sid>lazy_load_toggle_settings('c')
+nmap                  co                                    <plug>(lazy_load_co)
+nmap <expr> <silent>  <plug>(lazy_load_co)  <sid>lazy_load_toggle_settings('c')
 
-nmap                  [o                                    <plug>(my_lazy_load_[o)
-nmap <expr> <silent>  <plug>(my_lazy_load_[o)  <sid>lazy_load_toggle_settings('[')
+nmap                  [o                                    <plug>(lazy_load_[o)
+nmap <expr> <silent>  <plug>(lazy_load_[o)  <sid>lazy_load_toggle_settings('[')
 
-nmap                  ]o                                    <plug>(my_lazy_load_]o)
-nmap <expr> <silent>  <plug>(my_lazy_load_]o)  <sid>lazy_load_toggle_settings(']')
+nmap                  ]o                                    <plug>(lazy_load_]o)
+nmap <expr> <silent>  <plug>(lazy_load_]o)  <sid>lazy_load_toggle_settings(']')
 
 " Functions {{{1
 fu! s:lazy_load_toggle_settings(key) abort "{{{2
@@ -20,9 +20,9 @@ fu! s:lazy_load_toggle_settings(key) abort "{{{2
                \ 'co',
                \ '[o',
                \ ']o',
-               \ "\<plug>(my_lazy_load_co)",
-               \ "\<plug>(my_lazy_load_[o)",
-               \ "\<plug>(my_lazy_load_]o)" ]
+               \ "\<plug>(lazy_load_co)",
+               \ "\<plug>(lazy_load_[o)",
+               \ "\<plug>(lazy_load_]o)" ]
 
         exe 'sil! nunmap '.lhs
     endfor
@@ -34,4 +34,3 @@ endfu
 " Variables {{{1
 
 let s:autoload_script = expand('<sfile>:p:h:h').'/autoload/'.expand('<sfile>:t')
-
