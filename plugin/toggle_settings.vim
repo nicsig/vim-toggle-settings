@@ -89,7 +89,7 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno <silent> [o'.letter
     \.  ' :<c-u>'.cmd1
     \.  '<bar>echo '.string(
-    \                       !empty(msg1)
+    \                       !empty(msg1) || msg1 !=# "''"
     \?                          msg1
     \:                          '['.label.'] ON'
     \                      ).'<cr>'
@@ -97,7 +97,7 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno <silent> ]o'.letter
     \.  ' :<c-u>'.cmd2
     \.  '<bar>echo '.string(
-    \                       !empty(msg2)
+    \                       !empty(msg2) || msg2 !=# "''"
     \?                          msg2
     \:                          '['.label.'] OFF'
     \                      ).'<cr>'
