@@ -8,6 +8,8 @@ if exists('g:loaded_toggle_settings')
 endif
 let g:loaded_toggle_settings = 1
 
+com! -nargs=+ TS call s:toggle_settings(<f-args>)
+
 " Functions {{{1
 fu! s:toggle_cursorline(enable) abort "{{{2
 " 'cursorline' only in the active window and not in insert mode.
@@ -28,7 +30,6 @@ fu! s:toggle_cursorline(enable) abort "{{{2
         unlet! g:my_cursorline
     endif
 endfu
-call s:toggle_cursorline(0)
 
 fu! s:toggle_folds(enable) abort "{{{2
     let keys = [
@@ -109,7 +110,18 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
 endfu
 
-com! -nargs=+ TS call s:toggle_settings(<f-args>)
+fu! s:toggle_win_height(enable) abort "{{{2
+    if a:enable
+        augroup window_height
+            au!
+            au WinEnter * call {g:vimrc_snr}resize_window()
+        augroup END
+    else
+        sil! au! window_height
+        sil! aug! window_height
+        wincmd =
+    endif
+endfu
 
 " Mappings {{{1
 " Simple "{{{2
@@ -172,6 +184,14 @@ TS auto\ open\ folds
                 \ OFF
                 \ !empty(maparg('gg','n'))
 
+TS window\ height\ maximized
+                \ H
+                \ call\ <sid>toggle_win_height(1)
+                \ call\ <sid>toggle_win_height(0)
+                \ ON
+                \ OFF
+                \ exists('#window_height')
+
 TS cursorline
                 \ l
                 \ call\ <sid>toggle_cursorline(1)
@@ -196,7 +216,7 @@ TS number
                 \ &l:nu
 
 " Alternative:{{{
-" The following mapping/function allows to cycle between 3 states:
+" The following mapping/function allows to cycle through 3 states:
 "
 "     1. nonumber + norelativenumber
 "     2. number   +   relativenumber
