@@ -1,8 +1,3 @@
-" TODO:
-" Refactor the code so that `con` doesn't show any message.
-" Currently it displays `[NUMBER] on`.
-" But we know they're on. They're visible.
-
 if exists('g:loaded_toggle_settings')
     finish
 endif
@@ -75,8 +70,8 @@ endfu
 fu! s:toggle_settings(...) abort "{{{2
     if a:0 == 7
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
-        let msg1 = '['.label.'] '.msg1
-        let msg2 = '['.label.'] '.msg2
+        let msg1 = msg1 ==# "''" ? '' : '['.label.'] '.msg1
+        let msg2 = msg2 ==# "''" ? '' : '['.label.'] '.msg2
 
     elseif a:0 == 2
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] =
@@ -108,6 +103,15 @@ fu! s:toggle_settings(...) abort "{{{2
     \                      ).'<cr>'
 
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
+endfu
+
+fu! s:toggle_stl_list_position(enable) abort "{{{2
+    if a:enable
+        let g:my_stl_list_position = 1
+    else
+        let g:my_stl_list_position = 0
+    endif
+    redraws!
 endfu
 
 fu! s:toggle_win_height(enable) abort "{{{2
@@ -192,6 +196,14 @@ TS window\ height\ maximized
                 \ OFF
                 \ exists('#window_height')
 
+TS stl\ list\ position
+                \ i
+                \ call\ <sid>toggle_stl_list_position(1)
+                \ call\ <sid>toggle_stl_list_position(0)
+                \ ''
+                \ ''
+                \ get(g:,'my_stl_list_position',0)==1
+
 TS cursorline
                 \ l
                 \ call\ <sid>toggle_cursorline(1)
@@ -211,8 +223,8 @@ TS number
                 \ n
                 \ setl\ number\ relativenumber
                 \ setl\ nonumber\ norelativenumber
-                \ ON
-                \ OFF
+                \ ''
+                \ ''
                 \ &l:nu
 
 " Alternative:{{{
