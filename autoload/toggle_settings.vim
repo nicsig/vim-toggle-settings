@@ -6,7 +6,7 @@ let g:autoloaded_toggle_settings = 1
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
 " Functions {{{1
-fu! s:toggle_cursorline(enable) abort "{{{2
+fu! s:cursorline(enable) abort "{{{2
 " 'cursorline' only in the active window and not in insert mode.
     if a:enable
         setl cursorline
@@ -26,7 +26,7 @@ fu! s:toggle_cursorline(enable) abort "{{{2
     endif
 endfu
 
-fu! s:toggle_folds(enable) abort "{{{2
+fu! s:folds(enable) abort "{{{2
     let keys = [
                \ 'j',
                \ 'k',
@@ -59,12 +59,21 @@ fu! s:toggle_folds(enable) abort "{{{2
     endif
 endfu
 
-fu! s:toggle_matchparen(enable) abort "{{{2
+fu! s:matchparen(enable) abort "{{{2
     let cur_win = winnr()
     if filereadable($HOME.'/.vim/after/other_plugin/matchparen.vim')
         so ~/.vim/after/other_plugin/matchparen.vim
     endif
     exe cur_win.'wincmd w'
+endfu
+
+fu! s:stl_list_position(enable) abort "{{{2
+    if a:enable
+        let g:my_stl_list_position = 1
+    else
+        let g:my_stl_list_position = 0
+    endif
+    redraws!
 endfu
 
 fu! s:toggle_settings(...) abort "{{{2
@@ -105,16 +114,7 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
 endfu
 
-fu! s:toggle_stl_list_position(enable) abort "{{{2
-    if a:enable
-        let g:my_stl_list_position = 1
-    else
-        let g:my_stl_list_position = 0
-    endif
-    redraws!
-endfu
-
-fu! s:toggle_win_height(enable) abort "{{{2
+fu! s:win_height(enable) abort "{{{2
     if a:enable
         augroup window_height
             au!
@@ -150,8 +150,8 @@ TS showbreak
 
 TS colorscheme
                 \ C
-                \ colo\ my_seoul_light<bar>call\ <sid>toggle_cursorline(0)
-                \ colo\ my_seoul_dark<bar>call\ <sid>toggle_cursorline(1)
+                \ colo\ my_seoul_light<bar>call\ <sid>cursorline(0)
+                \ colo\ my_seoul_dark<bar>call\ <sid>cursorline(1)
                 \ light
                 \ dark
                 \ g:colors_name=~?'light'
@@ -182,32 +182,32 @@ TS formatoptions
 
 TS auto\ open\ folds
                 \ F
-                \ call\ <sid>toggle_folds(1)
-                \ call\ <sid>toggle_folds(0)
+                \ call\ <sid>folds(1)
+                \ call\ <sid>folds(0)
                 \ ON
                 \ OFF
                 \ !empty(maparg('gg','n'))
 
 TS window\ height\ maximized
                 \ H
-                \ call\ <sid>toggle_win_height(1)
-                \ call\ <sid>toggle_win_height(0)
+                \ call\ <sid>win_height(1)
+                \ call\ <sid>win_height(0)
                 \ ON
                 \ OFF
                 \ exists('#window_height')
 
 TS stl\ list\ position
                 \ i
-                \ call\ <sid>toggle_stl_list_position(1)
-                \ call\ <sid>toggle_stl_list_position(0)
+                \ call\ <sid>stl_list_position(1)
+                \ call\ <sid>stl_list_position(0)
                 \ ''
                 \ ''
                 \ get(g:,'my_stl_list_position',0)==1
 
 TS cursorline
                 \ l
-                \ call\ <sid>toggle_cursorline(1)
-                \ call\ <sid>toggle_cursorline(0)
+                \ call\ <sid>cursorline(1)
+                \ call\ <sid>cursorline(0)
                 \ ON
                 \ OFF
                 \ exists('g:my_cursorline')
@@ -234,9 +234,9 @@ TS number
 "     2. number   +   relativenumber
 "     3. number   + norelativenumber
 "
-"     nno <silent> con :<c-u>call <sid>toggle_numbers()<cr>
+"     nno <silent> con :<c-u>call <sid>numbers()<cr>
 "
-"     fu! s:toggle_numbers() abort
+"     fu! s:numbers() abort
 "         " The key '01' (state) is not necessary because no command in the dictionary
 "         " brings us to it.
 "         " However, if we got in this state by accident, hitting the mapping would raise
@@ -262,8 +262,8 @@ TS nrformats
 
 TS MatchParen
                 \ p
-                \ call\ <sid>toggle_matchparen(1)
-                \ call\ <sid>toggle_matchparen(0)
+                \ call\ <sid>matchparen(1)
+                \ call\ <sid>matchparen(0)
                 \ ON
                 \ OFF
                 \ exists('g:loaded_matchparen')
