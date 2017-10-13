@@ -3,10 +3,6 @@ if exists('g:loaded_toggle_settings')
 endif
 let g:loaded_toggle_settings = 1
 
-" Auto save {{{1
-
-call toggle_settings#auto_save_and_read(1)
-
 " Functions {{{1
 fu! s:lazy_load_toggle_settings(key) abort "{{{2
     for lhs in [
