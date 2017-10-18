@@ -118,7 +118,7 @@ fu! s:win_height(enable) abort "{{{2
     if a:enable
         augroup window_height
             au!
-            au WinEnter * call {g:vimrc_snr}resize_window()
+            au WinEnter * call Window_height()
         augroup END
     else
         sil! au! window_height
