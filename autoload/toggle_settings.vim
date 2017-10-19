@@ -120,10 +120,15 @@ fu! s:win_height(enable) abort "{{{2
             au!
             au WinEnter * call Window_height()
         augroup END
+        " We can't :echo right now, because it would cause a hit-enter prompt.
+        " Probably because  `:TS` already  echo an  empty string,  which creates
+        " some kind of multi-line message.
+        call timer_start(0, {-> execute('echo "[window height maximized] ON"', '')})
     else
         sil! au! window_height
         sil! aug! window_height
         wincmd =
+        call timer_start(0, {-> execute('echo "[window height maximized] OFF"', '')})
     endif
 endfu
 
@@ -188,12 +193,15 @@ TS auto\ open\ folds
                 \ OFF
                 \ !empty(maparg('gg','n'))
 
+" We  can't pass  `OFF` to  `:TS`, because  the message  would be  automatically
+" erased when  there are several windows  in the current tabpage,  and we remove
+" the autocmds.
 TS window\ height\ maximized
                 \ H
                 \ call\ <sid>win_height(1)
                 \ call\ <sid>win_height(0)
-                \ ON
-                \ OFF
+                \ ''
+                \ ''
                 \ exists('#window_height')
 
 TS stl\ list\ position
