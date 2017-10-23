@@ -96,19 +96,19 @@ fu! s:toggle_settings(...) abort "{{{2
             \ .'<bar>endif'
 
     exe 'nno <silent> [o'.letter
-    \.  ' :<c-u>'.cmd1
-    \.  '<bar>echo '.string(
-    \                       !empty(msg1) || msg1 !=# "''"
-    \?                          msg1
-    \:                          '['.label.'] ON'
+    \  .' :<c-u>'.cmd1
+    \  .'<bar>echo '.string(
+    \                         !empty(msg1) || msg1 !=# "''"
+    \                       ?     msg1
+    \                       :     '['.label.'] ON'
     \                      ).'<cr>'
 
     exe 'nno <silent> ]o'.letter
-    \.  ' :<c-u>'.cmd2
-    \.  '<bar>echo '.string(
-    \                       !empty(msg2) || msg2 !=# "''"
-    \?                          msg2
-    \:                          '['.label.'] OFF'
+    \  .' :<c-u>'.cmd2
+    \  .'<bar>echo '.string(
+    \                         !empty(msg2) || msg2 !=# "''"
+    \                       ?     msg2
+    \                       :     '['.label.'] OFF'
     \                      ).'<cr>'
 
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
