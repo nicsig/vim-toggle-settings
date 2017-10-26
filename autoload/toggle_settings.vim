@@ -157,8 +157,8 @@ TS colorscheme
                 \ C
                 \ colo\ my_seoul_light<bar>call\ <sid>cursorline(0)
                 \ colo\ my_seoul_dark<bar>call\ <sid>cursorline(1)
-                \ light
-                \ dark
+                \ ''
+                \ ''
                 \ g:colors_name=~?'light'
 
 TS conceal
