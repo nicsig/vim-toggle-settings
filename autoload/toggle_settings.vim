@@ -135,7 +135,7 @@ endfu
 " Mappings {{{1
 " Simple "{{{2
 
-TS  cursorcolumn  L
+TS  cursorcolumn  o
 TS  cursorline    l
 TS  hlsearch      h
 TS  list          I
