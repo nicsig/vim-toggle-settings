@@ -153,10 +153,19 @@ TS showbreak
                 \ OFF
                 \ !empty(&sbr)
 
+" In   our  vimrc   we  manually   set  `g:seoul256_background`   to  choose   a
+" custom  lightness.   When we  change  the  colorscheme,  from light  to  dark,
+" `g:seoul256_background` has a value which will be interpreted as the desire to
+" set a light colorscheme:
+"
+"         ~/.vim/plugged/seoul256.vim/colors/seoul256.vim
+"
+" This  is not  what we  want. We want  a dark  one. So, we  must make  sure the
+" variable is deleted before trying to load the dark colorscheme.
 TS colorscheme
                 \ C
-                \ colo\ my_seoul_light<bar>call\ <sid>cursorline(0)
-                \ colo\ my_seoul_dark<bar>call\ <sid>cursorline(1)
+                \ colo\ seoul256-light<bar>call\ <sid>cursorline(0)
+                \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline(1)
                 \ ''
                 \ ''
                 \ get(g:,'colors_name','')=~?'light'
