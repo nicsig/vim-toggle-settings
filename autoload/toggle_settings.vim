@@ -159,7 +159,7 @@ TS colorscheme
                 \ colo\ my_seoul_dark<bar>call\ <sid>cursorline(1)
                 \ ''
                 \ ''
-                \ g:colors_name=~?'light'
+                \ get(g:,'colors_name','')=~?'light'
 
 TS conceal
                 \ c
