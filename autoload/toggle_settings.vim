@@ -61,8 +61,8 @@ endfu
 
 fu! s:matchparen(enable) abort "{{{2
     let cur_win = winnr()
-    if filereadable($HOME.'/.vim/after/other_plugin/matchparen.vim')
-        so ~/.vim/after/other_plugin/matchparen.vim
+    if filereadable($HOME.'/.vim/after/plugin/matchparen.vim')
+        so ~/.vim/after/plugin/matchparen.vim
     endif
     exe cur_win.'wincmd w'
 endfu
