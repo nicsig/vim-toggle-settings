@@ -118,8 +118,9 @@ fu! s:virtualedit(enable) abort "{{{2
     if a:enable
         let s:ve_save = &ve
         set ve=all
+        unlet! s:ve_save
     else
-        let &ve = s:ve_save
+        let &ve = get(s:, 've_save', 'block')
     endif
     redraws!
 endfu
