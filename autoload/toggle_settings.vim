@@ -114,6 +114,16 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
 endfu
 
+fu! s:virtualedit(enable) abort "{{{2
+    if a:enable
+        let s:ve_save = &ve
+        set ve=all
+    else
+        let &ve = s:ve_save
+    endif
+    redraws!
+endfu
+
 fu! s:win_height(enable) abort "{{{2
     if a:enable
         augroup window_height
@@ -303,8 +313,8 @@ TS fold\ title
 
 TS virtualedit
                 \ v
-                \ set\ ve=all\|redraws!
-                \ set\ ve=\|redraws!
+                \ call\ <sid>virtualedit(1)
+                \ call\ <sid>virtualedit(0)
                 \ ALL
                 \ ø
-                \ !empty(&ve)
+                \ &ve==#'all'
