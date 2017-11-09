@@ -11,20 +11,23 @@ fu! s:auto_open_fold(action) abort "{{{2
         return exists('s:auto_open_fold')
     elseif a:action ==# 'enable'
         let s:auto_open_fold = {
-        \                        'foldclose' : &foldclose,
-        \                        'foldopen'  : &foldopen,
-        \                        'foldlevel' : &foldlevel,
+        \                        'foldenable' : &foldenable,
+        \                        'foldlevel'  : &foldlevel,
+        \                        'foldclose'  : &foldclose,
+        \                        'foldopen'   : &foldopen,
         \                      }
 
+        set foldenable
         set foldlevel=0   " Autofold everything by default
         set foldclose=all " Close folds if we leave them with any command
         set foldopen=all  " Open folds if we enter them with any command
 
         " set foldnestmax=1 " I only like to fold outer functions
     else
-        let &foldlevel = s:auto_open_fold.foldlevel
-        let &foldclose = s:auto_open_fold.foldclose
-        let &foldopen  = s:auto_open_fold.foldopen
+        let &foldenable = s:auto_open_fold.foldenable
+        let &foldlevel  = s:auto_open_fold.foldlevel
+        let &foldclose  = s:auto_open_fold.foldclose
+        let &foldopen   = s:auto_open_fold.foldopen
         unlet! s:auto_open_fold
 
         " set foldnestmax=1 " I only like to fold outer functions
