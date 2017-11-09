@@ -6,9 +6,36 @@ let g:autoloaded_toggle_settings = 1
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
 " Functions {{{1
-fu! s:cursorline(enable) abort "{{{2
+fu! s:auto_open_fold(action) abort "{{{2
+    if a:action ==# 'is_active'
+        return exists('s:auto_open_fold')
+    elseif a:action ==# 'enable'
+        let s:auto_open_fold = {
+        \                        'foldclose' : &foldclose,
+        \                        'foldopen'  : &foldopen,
+        \                        'foldlevel' : &foldlevel,
+        \                      }
+
+        set foldlevel=0   " Autofold everything by default
+        set foldclose=all " Close folds if we leave them with any command
+        set foldopen=all  " Open folds if we enter them with any command
+
+        " set foldnestmax=1 " I only like to fold outer functions
+    else
+        let &foldlevel = s:auto_open_fold.foldlevel
+        let &foldclose = s:auto_open_fold.foldclose
+        let &foldopen  = s:auto_open_fold.foldopen
+        unlet! s:auto_open_fold
+
+        " set foldnestmax=1 " I only like to fold outer functions
+    endif
+endfu
+
+fu! s:cursorline(action) abort "{{{2
 " 'cursorline' only in the active window and not in insert mode.
-    if a:enable
+    if a:action ==# 'is_active'
+        return exists('s:cursorline')
+    elseif a:action ==# 'enable'
         setl cursorline
         augroup my_cursorline
             au!
@@ -17,45 +44,12 @@ fu! s:cursorline(enable) abort "{{{2
             au InsertEnter       * setl nocursorline
             au InsertLeave       * setl cursorline
         augroup END
-        let g:my_cursorline = 1
+        let s:cursorline = 1
     else
         setl nocursorline
         sil! au! my_cursorline
         sil! aug! my_cursorline
-        unlet! g:my_cursorline
-    endif
-endfu
-
-fu! s:folds(enable) abort "{{{2
-    let keys = [
-               \ 'j',
-               \ 'k',
-               \ 'gg',
-               \ 'G',
-               \ '[z',
-               \ ']z',
-               \ "\<c-d>",
-               \ "\<c-u>",
-               \ '{',
-               \ '}'
-               \ ]
-
-    if a:enable
-        " `<nowait>` seems to make Vim slow when we press and maintain the
-        " mappings. So, don't add it.
-        for l:key in keys
-            exe 'nno <buffer> <silent> '.l:key.' zR'.l:key.'zMzv'
-        endfor
-
-        " `j` and `k` are special:  re-define them
-        nno <buffer> <expr> <silent> j line('.') != line('$') ? 'zRjzMzv' : 'j'
-        nno <buffer> <expr> <silent> k line('.') != 1         ? 'zRkzMzv' : 'k'
-
-        norm! zMzv
-    else
-        for l:key in keys
-            exe 'nunmap <buffer> '.l:key
-        endfor
+        unlet! s:cursorline
     endif
 endfu
 
@@ -175,8 +169,8 @@ TS showbreak
 " variable is deleted before trying to load the dark colorscheme.
 TS colorscheme
                 \ C
-                \ colo\ seoul256-light<bar>call\ <sid>cursorline(0)
-                \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline(1)
+                \ colo\ seoul256-light<bar>call\ <sid>cursorline('disable')
+                \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline('enable')
                 \ ''
                 \ ''
                 \ get(g:,'colors_name','')=~?'light'
@@ -197,21 +191,27 @@ TS diff
                 \ OFF
                 \ &l:diff
 
-TS formatoptions
+TS auto\ open\ folds
                 \ f
+                \ call\ <sid>auto_open_fold('enable')
+                \ call\ <sid>auto_open_fold('disable')
+                \ ON
+                \ OFF
+                \ <sid>auto_open_fold('is_active')
+                " │
+                " └─ We can't use a  script-local variable, because we can't
+                " access it from a mapping:
+                "
+                "            exists('s:my_var')       ✘
+                "            exists('<sid>my_var')    ✘
+
+TS formatoptions
+                \ F
                 \ setl\ fo+=c
                 \ setl\ fo-=c
                 \ +c:\ auto-wrap\ comments\ ON
                 \ -c:\ auto-wrap\ comments\ OFF
                 \ index(split(&l:fo,'\\zs'),'c') != -1
-
-TS auto\ open\ folds
-                \ F
-                \ call\ <sid>folds(1)
-                \ call\ <sid>folds(0)
-                \ ON
-                \ OFF
-                \ !empty(maparg('gg','n'))
 
 " We  can't pass  `OFF` to  `:TS`, because  the message  would be  automatically
 " erased when  there are several windows  in the current tabpage,  and we remove
@@ -234,18 +234,11 @@ TS stl\ list\ position
 
 TS cursorline
                 \ l
-                \ call\ <sid>cursorline(1)
-                \ call\ <sid>cursorline(0)
+                \ call\ <sid>cursorline('enable')
+                \ call\ <sid>cursorline('disable')
                 \ ON
                 \ OFF
-                \ exists('g:my_cursorline')
-
-" NOTE: We can't use a script-local variable, because we can't access it from
-" a mapping:
-"
-"         exists('s:my_cursorline')       ✘
-"         exists('<sid>my_cursorline')    ✘
-
+                \ <sid>cursorline('is_active')
 
 TS number
                 \ n
