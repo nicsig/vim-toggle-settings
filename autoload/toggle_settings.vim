@@ -8,29 +8,28 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
     if a:action ==# 'is_active'
-        return exists('s:auto_open_fold')
-    elseif a:action ==# 'enable'
-        let s:auto_open_fold = {
-        \                        'foldenable' : &foldenable,
-        \                        'foldlevel'  : &foldlevel,
-        \                        'foldclose'  : &foldclose,
-        \                        'foldopen'   : &foldopen,
-        \                      }
+        return exists('s:fold_options_save')
+    elseif a:action ==# 'enable' && !exists('s:fold_options_save')
+        let s:fold_options_save = {
+        \                           'close'   : &foldclose,
+        \                           'enable'  : &foldenable,
+        \                           'level'   : &foldlevel,
+        \                           'nestmax' : &foldnestmax,
+        \                           'open'    : &foldopen,
+        \                         }
 
+        set foldclose=all " Close folds if we leave them with any command
         set foldenable
         set foldlevel=0   " Autofold everything by default
-        set foldclose=all " Close folds if we leave them with any command
+        " TODO: study 'foldnestmax'
+        " add 'foldmethod'?
+        set foldnestmax=1 " I only like to fold outer functions
         set foldopen=all  " Open folds if we enter them with any command
-
-        " set foldnestmax=1 " I only like to fold outer functions
-    else
-        let &foldenable = s:auto_open_fold.foldenable
-        let &foldlevel  = s:auto_open_fold.foldlevel
-        let &foldclose  = s:auto_open_fold.foldclose
-        let &foldopen   = s:auto_open_fold.foldopen
-        unlet! s:auto_open_fold
-
-        " set foldnestmax=1 " I only like to fold outer functions
+    elseif a:action ==# 'disable' && exists('s:fold_options_save')
+        for op in keys(s:fold_options_save)
+            exe 'let &fold'.op.' = s:fold_options_save.'.op
+        endfor
+        unlet! s:fold_options_save
     endif
 endfu
 
@@ -38,7 +37,7 @@ fu! s:cursorline(action) abort "{{{2
 " 'cursorline' only in the active window and not in insert mode.
     if a:action ==# 'is_active'
         return exists('s:cursorline')
-    elseif a:action ==# 'enable'
+    elseif a:action ==# 'enable' && !exists('s:cursorline')
         setl cursorline
         augroup my_cursorline
             au!
@@ -48,7 +47,7 @@ fu! s:cursorline(action) abort "{{{2
             au InsertLeave       * setl cursorline
         augroup END
         let s:cursorline = 1
-    else
+    elseif a:action ==# 'disable' && exists('s:cursorline')
         setl nocursorline
         sil! au! my_cursorline
         sil! aug! my_cursorline
