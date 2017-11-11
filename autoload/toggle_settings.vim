@@ -6,14 +6,23 @@ let g:autoloaded_toggle_settings = 1
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
 " Warning: don't forget to properly handle repeated (dis)activations {{{
+" Necessary when you save/restore a state with a custom variable.
 "
 " When you  write a function  to activate/disactivate/toggle some state,  do NOT
 " assume it will only be used for repeated toggling.
 " It can also  be used for (useless) repeated activation,  or (useless) repeated
 " disactivation.
 "
-" This means that  before trying to (dis)activate some state,  the function must
-" detect whether it's necessary. Otherwise, it can lead to errors.
+" If  the  function  doesn't  save/restore  a state  using  a  custom  variable,
+" there's  no  issue  (ex:  `s:stl_list_position()`).    But  if  it  does  (ex:
+" `s:cursorline()`), and you don't handle repeated (dis)activations, it can lead
+" to errors.
+"
+" For  example, if  you enable  a state  twice, the  1st time,  it will  work as
+" expected: the function  will save the original  state, A, then put  you in the
+" new state B.
+" But the 2nd time, the function will blindly save B, as if it was A.
+" So, when you will invoke it to restore A, you will, in effect, restore B.
 "
 " So, NEVER write this:
 "
@@ -22,15 +31,19 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 "            │      • when it's 1 it means we want to enable  some state
 "            │      • "         0                     disable "
 "            │
-"         if a:enable    ✘
+"         if a:enable                       ✘
+"             let s:save = …
+"                 │
+"                 └─ save current state for future restoration
 "             …
-"         else
+"         else                              ✘
 "             …
 "         endif
 "
 " Instead:
 "
 "         if a:enable && is_disabled        ✔
+"             let s:save = …
 "             …
 "         elseif a:disable && is_enabled    ✔
 "             …
@@ -53,7 +66,6 @@ fu! s:auto_open_fold(action) abort "{{{2
         set foldenable
         set foldlevel=0   " Autofold everything by default
         " TODO: study 'foldnestmax'
-        " add 'foldmethod'?
         set foldnestmax=1 " I only like to fold outer functions
         set foldopen=all  " Open folds if we enter them with any command
     elseif a:action ==# 'disable' && exists('s:fold_options_save')
