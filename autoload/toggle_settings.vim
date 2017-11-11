@@ -148,12 +148,12 @@ fu! s:toggle_settings(...) abort "{{{2
 endfu
 
 fu! s:virtualedit(enable) abort "{{{2
-    if a:enable
+    if a:enable && !exists('s:ve_save')
         let s:ve_save = &ve
         set ve=all
-        unlet! s:ve_save
-    else
+    elseif !a:enable && exists('s:ve_save')
         let &ve = get(s:, 've_save', 'block')
+        unlet! s:ve_save
     endif
     redraws!
 endfu
