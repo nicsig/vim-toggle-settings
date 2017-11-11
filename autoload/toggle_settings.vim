@@ -5,26 +5,28 @@ let g:autoloaded_toggle_settings = 1
 
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
-" Warning: don't forget to properly handle repeated (dis)activations {{{
+" WARNING{{{
+" Don't forget to properly handle repeated (dis)activations. {{{
 " Necessary when you save/restore a state with a custom variable.
 "
 " When you  write a function  to activate/disactivate/toggle some state,  do NOT
 " assume it will only be used for repeated toggling.
-" It can also  be used for (useless) repeated activation,  or (useless) repeated
-" disactivation.
+" It  can also  be used  for (accidental)  repeated activation,  or (accidental)
+" repeated disactivation.
 "
-" If  the  function  doesn't  save/restore  a state  using  a  custom  variable,
-" there's  no  issue  (ex:  `s:stl_list_position()`).    But  if  it  does  (ex:
-" `s:cursorline()`), and you don't handle repeated (dis)activations, it can lead
-" to errors.
+" If the function doesn't save/restore a  state using a custom variable, there's
+" no issue (ex: `s:cursorline()`).  But  if it does (ex: `s:virtualedit()`), and
+" you don't handle repeated (dis)activations, it can lead to errors.
 "
-" For  example, if  you enable  a state  twice, the  1st time,  it will  work as
-" expected: the function  will save the original  state, A, then put  you in the
-" new state B.
+" For example,  if you transit to  the same state  twice, the 1st time,  it will
+" work as expected: the  function will save the original state,  A, then put you
+" in the new state B.
 " But the 2nd time, the function will blindly save B, as if it was A.
 " So, when you will invoke it to restore A, you will, in effect, restore B.
+"}}}
+" What should I avoid?{{{
 "
-" So, NEVER write this:
+" NEVER write this:
 "
 "            ┌─ boolean argument:
 "            │
@@ -49,25 +51,44 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 "             …
 "         endif
 "}}}
+" Which functions are concerned?{{{
+"
+" All functions make  you transit to a new known  state (are there exceptions?).
+" But some of them do it from a  known state, while others do it from an UNKNOWN
+" one.  The current issue concerns the  latter, because when you transit from an
+" unknown state, you have to save it first for the future restoration. You don't
+" need to do that when you know it in advance.
+"}}}
+"}}}
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
     if a:action ==# 'is_active'
         return exists('s:fold_options_save')
     elseif a:action ==# 'enable' && !exists('s:fold_options_save')
         let s:fold_options_save = {
-        \                           'close'   : &foldclose,
-        \                           'enable'  : &foldenable,
-        \                           'level'   : &foldlevel,
-        \                           'nestmax' : &foldnestmax,
-        \                           'open'    : &foldopen,
+        \                           'close'  : &foldclose,
+        \                           'open'   : &foldopen,
+        \                           'enable' : &foldenable,
+        \                           'level'  : &foldlevel,
         \                         }
 
-        set foldclose=all " Close folds if we leave them with any command
+        " Consider setting 'foldnestmax' if you use 'indent'/'syntax' as a folding method.{{{
+        "
+        " If you set the local value of  'fdm' to 'indent' or 'syntax', Vim will
+        " automatically fold the buffer according to its indentation / syntax.
+        "
+        " It can lead to deeply nested folds. This can be annoying when you have
+        " to open  a lot of  folds to  read the contents  of a line.
+        "
+        " One way to tackle this issue  is to reduce the value of 'foldnestmax'.
+        " By default  it's 20 (which is  the deepest level of  nested folds that
+        " Vim can produce with these 2 methods  anyway). If you set it to 1, Vim
+        " will only produce folds for the outermost blocks (functions/methods).
+        "}}}
+        set foldclose=all " close a fold if we leave it with any command
+        set foldopen=all  " open  a fold if we enter it with any command
         set foldenable
-        set foldlevel=0   " Autofold everything by default
-        " TODO: study 'foldnestmax'
-        set foldnestmax=1 " I only like to fold outer functions
-        set foldopen=all  " Open folds if we enter them with any command
+        set foldlevel=0   " close all folds by default
     elseif a:action ==# 'disable' && exists('s:fold_options_save')
         for op in keys(s:fold_options_save)
             exe 'let &fold'.op.' = s:fold_options_save.'.op
@@ -76,11 +97,9 @@ fu! s:auto_open_fold(action) abort "{{{2
     endif
 endfu
 
-fu! s:cursorline(action) abort "{{{2
-" 'cursorline' only in the active window and not in insert mode.
-    if a:action ==# 'is_active'
-        return exists('s:cursorline')
-    elseif a:action ==# 'enable' && !exists('s:cursorline')
+fu! s:cursorline(enable) abort "{{{2
+    " 'cursorline' only in the active window and not in insert mode.
+    if a:enable
         setl cursorline
         augroup my_cursorline
             au!
@@ -89,12 +108,10 @@ fu! s:cursorline(action) abort "{{{2
             au InsertEnter       * setl nocursorline
             au InsertLeave       * setl cursorline
         augroup END
-        let s:cursorline = 1
-    elseif a:action ==# 'disable' && exists('s:cursorline')
+    else
         setl nocursorline
         sil! au! my_cursorline
         sil! aug! my_cursorline
-        unlet! s:cursorline
     endif
 endfu
 
@@ -159,11 +176,13 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
 endfu
 
-fu! s:virtualedit(enable) abort "{{{2
-    if a:enable && !exists('s:ve_save')
+fu! s:virtualedit(action) abort "{{{2
+    if a:action ==# 'is_all'
+        return exists('s:ve_save')
+    elseif a:action ==# 'enable' && !exists('s:ve_save')
         let s:ve_save = &ve
         set ve=all
-    elseif !a:enable && exists('s:ve_save')
+    elseif a:action ==# 'disable' && exists('s:ve_save')
         let &ve = get(s:, 've_save', 'block')
         unlet! s:ve_save
     endif
@@ -220,8 +239,8 @@ TS showbreak
 " variable is deleted before trying to load the dark colorscheme.
 TS colorscheme
                 \ C
-                \ colo\ seoul256-light<bar>call\ <sid>cursorline('disable')
-                \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline('enable')
+                \ colo\ seoul256-light<bar>call\ <sid>cursorline(0)
+                \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline(1)
                 \ ''
                 \ ''
                 \ get(g:,'colors_name','')=~?'light'
@@ -285,11 +304,11 @@ TS stl\ list\ position
 
 TS cursorline
                 \ l
-                \ call\ <sid>cursorline('enable')
-                \ call\ <sid>cursorline('disable')
+                \ call\ <sid>cursorline(1)
+                \ call\ <sid>cursorline(0)
                 \ ON
                 \ OFF
-                \ <sid>cursorline('is_active')
+                \ exists('#my_cursorline')
 
 TS number
                 \ n
@@ -358,8 +377,8 @@ TS fold\ title
 
 TS virtualedit
                 \ v
-                \ call\ <sid>virtualedit(1)
-                \ call\ <sid>virtualedit(0)
+                \ call\ <sid>virtualedit('enable')
+                \ call\ <sid>virtualedit('disable')
                 \ ALL
                 \ ø
-                \ &ve==#'all'
+                \ <sid>virtualedit('is_all')
