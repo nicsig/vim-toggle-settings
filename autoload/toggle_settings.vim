@@ -5,6 +5,37 @@ let g:autoloaded_toggle_settings = 1
 
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
+" Warning: don't forget to properly handle repeated (dis)activations {{{
+"
+" When you  write a function  to activate/disactivate/toggle some state,  do NOT
+" assume it will only be used for repeated toggling.
+" It can also  be used for (useless) repeated activation,  or (useless) repeated
+" disactivation.
+"
+" This means that  before trying to (dis)activate some state,  the function must
+" detect whether it's necessary. Otherwise, it can lead to errors.
+"
+" So, NEVER write this:
+"
+"            ┌─ boolean argument:
+"            │
+"            │      • when it's 1 it means we want to enable  some state
+"            │      • "         0                     disable "
+"            │
+"         if a:enable    ✘
+"             …
+"         else
+"             …
+"         endif
+"
+" Instead:
+"
+"         if a:enable && is_disabled        ✔
+"             …
+"         elseif a:disable && is_enabled    ✔
+"             …
+"         endif
+"}}}
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
     if a:action ==# 'is_active'
@@ -57,6 +88,9 @@ endfu
 
 fu! s:matchparen(enable) abort "{{{2
     if !filereadable($HOME.'/.vim/after/plugin/matchparen.vim')
+        call timer_start(0, {-> execute('  redraw!
+        \                                | echo printf("%s is not readable",
+        \                                              $HOME."/.vim/after/plugin/matchparen.vim")', '')})
         return
     endif
     let cur_win = winnr()
