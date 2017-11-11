@@ -56,8 +56,11 @@ fu! s:cursorline(action) abort "{{{2
 endfu
 
 fu! s:matchparen(enable) abort "{{{2
+    if !filereadable($HOME.'/.vim/after/plugin/matchparen.vim')
+        return
+    endif
     let cur_win = winnr()
-    if filereadable($HOME.'/.vim/after/plugin/matchparen.vim')
+    if a:enable && !exists('g:loaded_matchparen') || !a:enable && exists('g:loaded_matchparen')
         so ~/.vim/after/plugin/matchparen.vim
     endif
     exe cur_win.'wincmd w'
