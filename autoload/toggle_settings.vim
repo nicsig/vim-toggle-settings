@@ -356,7 +356,7 @@ TS nrformats
                 \ setl\ nf-=alpha
                 \ +alpha
                 \ -alpha
-                \ index(split(&l:nf,','),'alpha') != -1
+                \ index(split(&l:nf,','),'alpha')!=-1
 
 TS MatchParen
                 \ p
