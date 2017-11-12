@@ -247,11 +247,10 @@ endfu
 " Simple "{{{2
 
 TS  cursorcolumn  o
-TS  cursorline    l
 TS  hlsearch      h
 TS  list          I
-TS  showcmd       W
 TS  spell         s
+TS  showcmd       W
 TS  wrap          w
 
 " Complex {{{2
