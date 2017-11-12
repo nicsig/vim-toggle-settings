@@ -5,6 +5,13 @@ let g:autoloaded_toggle_settings = 1
 
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
+" FIXME:   Prevent  `:TS` from  echo'ing  anything  when  it receives  an  empty
+" message.
+
+" FIXME:  There's  some duplicate  code between `s:formatprg()`  and html/css/js
+" filetype plugins.  Not good. If I change one without the other… There should
+" be a single place where we define the format program.
+
 " WARNING{{{
 " Don't forget to properly handle repeated (dis)activations. {{{
 " Necessary when you save/restore a state with a custom variable.
@@ -24,7 +31,7 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 " But the 2nd time, the function will blindly save B, as if it was A.
 " So, when you will invoke it to restore A, you will, in effect, restore B.
 "}}}
-" What should I avoid?{{{
+" What should you avoid?{{{
 "
 " NEVER write this:
 "
@@ -115,6 +122,18 @@ fu! s:cursorline(enable) abort "{{{2
     endif
 endfu
 
+fu! s:formatprg(par) abort "{{{2
+    if a:par
+        setl fp<
+    else
+        " https://github.com/beautify-web/js-beautify
+        "
+        "         sudo npm -g install js-beautify
+        let &l:fp = 'js-beautify '.(&ft ==# 'html' ? '--html' : &ft ==# 'css' ? '--css' : '')
+    endif
+    call timer_start(0, {-> execute('echo '.string('[formatprg] '.&l:fp), '')})
+endfu
+
 fu! s:matchparen(enable) abort "{{{2
     if !filereadable($HOME.'/.vim/after/plugin/matchparen.vim')
         call timer_start(0, {-> execute('  redraw!
@@ -195,7 +214,7 @@ fu! s:win_height(enable) abort "{{{2
             au!
             au WinEnter * call Window_height()
         augroup END
-        " We can't :echo right now, because it would cause a hit-enter prompt.
+        " We can't :echo  right now, because it would cause  a hit-enter prompt.
         " Probably because  `:TS` already  echo an  empty string,  which creates
         " some kind of multi-line message.
         call timer_start(0, {-> execute('echo "[window height maximized] ON"', '')})
@@ -261,22 +280,8 @@ TS diff
                 \ OFF
                 \ &l:diff
 
-TS auto\ open\ folds
-                \ f
-                \ call\ <sid>auto_open_fold('enable')
-                \ call\ <sid>auto_open_fold('disable')
-                \ ON
-                \ OFF
-                \ <sid>auto_open_fold('is_active')
-                " │
-                " └─ We can't use a  script-local variable, because we can't
-                " access it from a mapping:
-                "
-                "            exists('s:my_var')       ✘
-                "            exists('<sid>my_var')    ✘
-
 TS formatoptions
-                \ F
+                \ f
                 \ setl\ fo+=c
                 \ setl\ fo-=c
                 \ +c:\ auto-wrap\ comments\ ON
@@ -359,6 +364,16 @@ TS MatchParen
                 \ OFF
                 \ exists('g:loaded_matchparen')
 
+" `gq` is  currently used  to format comments,  but it would  also be  useful to
+" execute formatting tools such as js-beautify.
+TS formatprg
+                \ q
+                \ call\ <sid>formatprg(1)
+                \ call\ <sid>formatprg(0)
+                \ ''
+                \ ''
+                \ &l:fp=~#'^par\s'<bar><bar>empty(&l:fp)
+
 TS spelllang
                 \ S
                 \ setl\ spl=fr
@@ -382,3 +397,18 @@ TS virtualedit
                 \ ALL
                 \ ø
                 \ <sid>virtualedit('is_all')
+
+" Vim uses `z` as a prefix to build all fold-related commands in normal mode.
+TS auto\ open\ folds
+                \ z
+                \ call\ <sid>auto_open_fold('enable')
+                \ call\ <sid>auto_open_fold('disable')
+                \ ON
+                \ OFF
+                \ <sid>auto_open_fold('is_active')
+                " │
+                " └─ We can't use a  script-local variable, because we can't
+                " access it from a mapping:
+                "
+                "            exists('s:my_var')       ✘
+                "            exists('<sid>my_var')    ✘
