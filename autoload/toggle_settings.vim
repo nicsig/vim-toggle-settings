@@ -5,9 +5,6 @@ let g:autoloaded_toggle_settings = 1
 
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
-" FIXME:   Prevent  `:TS` from  echo'ing  anything  when  it receives  an  empty
-" message.
-
 " FIXME:
 " coN in `help` / `qf` filetype plugins conflict with coN here.
 " Find better mappings for hiding noise, toggling numbers, toggling 'nrformats',
@@ -153,9 +150,7 @@ endfu
 
 fu! s:matchparen(enable) abort "{{{2
     if !filereadable($HOME.'/.vim/after/plugin/matchparen.vim')
-        call timer_start(0, {-> execute('  redraw!
-        \                                | echo printf("%s is not readable",
-        \                                              $HOME."/.vim/after/plugin/matchparen.vim")', '')})
+        echo printf('%s is not readable', $HOME.'/.vim/after/plugin/matchparen.vim')
         return
     endif
     let cur_win = winnr()
@@ -163,6 +158,7 @@ fu! s:matchparen(enable) abort "{{{2
         so ~/.vim/after/plugin/matchparen.vim
     endif
     exe cur_win.'wincmd w'
+    echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
 endfu
 
 fu! s:stl_list_position(enable) abort "{{{2
@@ -366,8 +362,6 @@ TS MatchParen
                 \ p
                 \ call\ <sid>matchparen(1)
                 \ call\ <sid>matchparen(0)
-                \ ON
-                \ OFF
                 \ exists('g:loaded_matchparen')
 
 " `gq` is  currently used  to format comments,  but it would  also be  useful to
