@@ -5,11 +5,6 @@ let g:autoloaded_toggle_settings = 1
 
 com! -nargs=+ TS call s:toggle_settings(<f-args>)
 
-" FIXME:
-" coN in `help` / `qf` filetype plugins conflict with coN here.
-" Find better mappings for hiding noise, toggling numbers, toggling 'nrformats',
-" and maybe conceal (which hides noise too).
-
 " WARNING{{{
 " Don't forget to properly handle repeated (dis)activations. {{{
 " Necessary when you save/restore a state with a custom variable.
@@ -250,7 +245,7 @@ TS  wrap          w
 " Complex {{{2
 
 TS showbreak
-                \ b
+                \ B
                 \ setl\ showbreak=↪
                 \ setl\ showbreak=
                 \ ON
