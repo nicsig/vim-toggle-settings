@@ -8,9 +8,10 @@ com! -nargs=+ TS call s:toggle_settings(<f-args>)
 " FIXME:   Prevent  `:TS` from  echo'ing  anything  when  it receives  an  empty
 " message.
 
-" FIXME:  There's  some duplicate  code between `s:formatprg()`  and html/css/js
-" filetype plugins.  Not good. If I change one without the other… There should
-" be a single place where we define the format program.
+" FIXME:
+" coN in `help` / `qf` filetype plugins conflict with coN here.
+" Find better mappings for hiding noise, toggling numbers, toggling 'nrformats',
+" and maybe conceal (which hides noise too).
 
 " WARNING{{{
 " Don't forget to properly handle repeated (dis)activations. {{{
@@ -122,14 +123,35 @@ fu! s:cursorline(enable) abort "{{{2
     endif
 endfu
 
-fu! s:formatprg(par) abort "{{{2
-    if a:par
+fu! s:formatprg(scope) abort "{{{2
+    if a:scope ==# 'global'
+        if &g:fp !=# &l:fp
+            if !exists('s:local_fp_save')
+                let s:local_fp_save = {}
+            endif
+            " use a  dictionary to save  the local value  of 'fp' in  any buffer
+            " where we use our mappings to toggle the latter
+            let s:local_fp_save[bufnr('%')] = &l:fp
+        endif
         setl fp<
-    else
-        " https://github.com/beautify-web/js-beautify
+    elseif a:scope ==# 'local'
+        " `js-beautify` is a formatting tool for js, html, css.
+        "
+        " Installation:
         "
         "         sudo npm -g install js-beautify
-        let &l:fp = 'js-beautify '.(&ft ==# 'html' ? '--html' : &ft ==# 'css' ? '--css' : '')
+        "
+        " Documentation:
+        "
+        "         https://github.com/beautify-web/js-beautify
+        "
+        " The tool has  many options, you can use the  ones you find interesting
+        " in the value of 'fp'.
+        let &l:fp = exists('s:local_fp_save')
+        \           ?    get(s:local_fp_save, bufnr('%'), &l:fp)
+        \           :    &l:fp
+    else
+        return
     endif
     call timer_start(0, {-> execute('echo '.string('[formatprg] '.&l:fp), '')})
 endfu
@@ -368,11 +390,11 @@ TS MatchParen
 " execute formatting tools such as js-beautify.
 TS formatprg
                 \ q
-                \ call\ <sid>formatprg(1)
-                \ call\ <sid>formatprg(0)
+                \ call\ <sid>formatprg('global')
+                \ call\ <sid>formatprg('local')
                 \ ''
                 \ ''
-                \ &l:fp=~#'^par\s'<bar><bar>empty(&l:fp)
+                \ &g:fp==#&l:fp
 
 TS spelllang
                 \ S
