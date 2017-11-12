@@ -124,17 +124,15 @@ fu! s:cursorline(enable) abort "{{{2
 endfu
 
 fu! s:formatprg(scope) abort "{{{2
-    if a:scope ==# 'global'
-        if &g:fp !=# &l:fp
-            if !exists('s:local_fp_save')
-                let s:local_fp_save = {}
-            endif
-            " use a  dictionary to save  the local value  of 'fp' in  any buffer
-            " where we use our mappings to toggle the latter
-            let s:local_fp_save[bufnr('%')] = &l:fp
+    if a:scope ==# 'global' && &g:fp !=# &l:fp
+        if !exists('s:local_fp_save')
+            let s:local_fp_save = {}
         endif
+        " use a  dictionary to save  the local value  of 'fp' in  any buffer
+        " where we use our mappings to toggle the latter
+        let s:local_fp_save[bufnr('%')] = &l:fp
         setl fp<
-    elseif a:scope ==# 'local'
+    elseif a:scope ==# 'local' && &g:fp ==# &l:fp
         " `js-beautify` is a formatting tool for js, html, css.
         "
         " Installation:
@@ -150,10 +148,8 @@ fu! s:formatprg(scope) abort "{{{2
         let &l:fp = exists('s:local_fp_save')
         \           ?    get(s:local_fp_save, bufnr('%'), &l:fp)
         \           :    &l:fp
-    else
-        return
     endif
-    call timer_start(0, {-> execute('echo '.string('[formatprg] '.&l:fp), '')})
+    call timer_start(0, {-> execute('echo '.string('[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)), '')})
 endfu
 
 fu! s:matchparen(enable) abort "{{{2
