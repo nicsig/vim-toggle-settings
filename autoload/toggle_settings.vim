@@ -148,7 +148,7 @@ fu! s:formatprg(scope) abort "{{{2
         let &l:fp = get(s:local_fp_save, bufnr('%'), &l:fp)
         unlet! s:local_fp_save[bufnr('%')]
     endif
-    call timer_start(0, {-> execute('echo '.string('[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)), '')})
+    echo '[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)
 endfu
 
 fu! s:matchparen(enable) abort "{{{2
@@ -177,8 +177,23 @@ endfu
 fu! s:toggle_settings(...) abort "{{{2
     if a:0 == 7
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
-        let msg1 = msg1 ==# "''" ? '' : '['.label.'] '.msg1
-        let msg2 = msg2 ==# "''" ? '' : '['.label.'] '.msg2
+        let msg1 = '['.label.'] '.msg1
+        let msg2 = '['.label.'] '.msg2
+
+    elseif a:0 == 5
+        let [ label, letter, cmd1, cmd2, test ] = a:000
+
+        let rhs3 =  '     if '.test
+        \          .'<bar>    exe '.string(cmd2)
+        \          .'<bar>else'
+        \          .'<bar>    exe '.string(cmd1)
+        \          .'<bar>endif'
+
+        exe 'nno <silent> [o'.letter.' :<c-u>'.cmd1.'<cr>'
+        exe 'nno <silent> ]o'.letter.' :<c-u>'.cmd2.'<cr>'
+        exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
+
+        return
 
     elseif a:0 == 2
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] =
@@ -187,28 +202,14 @@ fu! s:toggle_settings(...) abort "{{{2
         return
     endif
 
-    let rhs3 =      'if '.test
-            \ .'<bar>    exe "'.cmd2.'"<bar>echo "'.msg2.'"'
-            \ .'<bar>else'
-            \ .'<bar>    exe "'.cmd1.'"<bar>echo "'.msg1.'"'
-            \ .'<bar>endif'
+    let rhs3 =  '     if '.test
+    \          .'<bar>    exe '.string(cmd2).'<bar>echo '.string(msg2)
+    \          .'<bar>else'
+    \          .'<bar>    exe '.string(cmd1).'<bar>echo '.string(msg1)
+    \          .'<bar>endif'
 
-    exe 'nno <silent> [o'.letter
-    \  .' :<c-u>'.cmd1
-    \  .'<bar>echo '.string(
-    \                         !empty(msg1) || msg1 !=# "''"
-    \                       ?     msg1
-    \                       :     '['.label.'] ON'
-    \                      ).'<cr>'
-
-    exe 'nno <silent> ]o'.letter
-    \  .' :<c-u>'.cmd2
-    \  .'<bar>echo '.string(
-    \                         !empty(msg2) || msg2 !=# "''"
-    \                       ?     msg2
-    \                       :     '['.label.'] OFF'
-    \                      ).'<cr>'
-
+    exe 'nno <silent> [o'.letter.' :<c-u>'.cmd1.'<bar>echo '.string(msg1).'<cr>'
+    exe 'nno <silent> ]o'.letter.' :<c-u>'.cmd2.'<bar>echo '.string(msg2).'<cr>'
     exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
 endfu
 
@@ -231,15 +232,12 @@ fu! s:win_height(enable) abort "{{{2
             au!
             au WinEnter * call Window_height()
         augroup END
-        " We can't :echo  right now, because it would cause  a hit-enter prompt.
-        " Probably because  `:TS` already  echo an  empty string,  which creates
-        " some kind of multi-line message.
-        call timer_start(0, {-> execute('echo "[window height maximized] ON"', '')})
+        echo '[window height maximized] ON'
     else
         sil! au! window_height
         sil! aug! window_height
         wincmd =
-        call timer_start(0, {-> execute('echo "[window height maximized] OFF"', '')})
+        echo '[window height maximized] OFF'
     endif
 endfu
 
@@ -276,8 +274,6 @@ TS colorscheme
                 \ C
                 \ colo\ seoul256-light<bar>call\ <sid>cursorline(0)
                 \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline(1)
-                \ ''
-                \ ''
                 \ get(g:,'colors_name','')=~?'light'
 
 TS conceal
@@ -311,16 +307,12 @@ TS window\ height\ maximized
                 \ H
                 \ call\ <sid>win_height(1)
                 \ call\ <sid>win_height(0)
-                \ ''
-                \ ''
                 \ exists('#window_height')
 
 TS stl\ list\ position
                 \ i
                 \ call\ <sid>stl_list_position(1)
                 \ call\ <sid>stl_list_position(0)
-                \ ''
-                \ ''
                 \ get(g:,'my_stl_list_position',0)==1
 
 TS cursorline
@@ -335,8 +327,6 @@ TS number
                 \ n
                 \ setl\ number\ relativenumber
                 \ setl\ nonumber\ norelativenumber
-                \ ''
-                \ ''
                 \ &l:nu
 
 " Alternative:{{{
@@ -386,8 +376,6 @@ TS formatprg
                 \ q
                 \ call\ <sid>formatprg('global')
                 \ call\ <sid>formatprg('local')
-                \ ''
-                \ ''
                 \ &g:fp==#&l:fp
 
 TS spelllang
