@@ -157,11 +157,7 @@ fu! s:matchparen(enable) abort "{{{2
 endfu
 
 fu! s:stl_list_position(enable) abort "{{{2
-    if a:enable
-        let g:my_stl_list_position = 1
-    else
-        let g:my_stl_list_position = 0
-    endif
+    let g:my_stl_list_position = a:enable ? 1 : 0
     redraws!
 endfu
 
