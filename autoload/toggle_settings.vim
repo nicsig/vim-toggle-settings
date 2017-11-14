@@ -93,6 +93,7 @@ fu! s:auto_open_fold(action) abort "{{{2
         for op in keys(s:fold_options_save)
             exe 'let &fold'.op.' = s:fold_options_save.'.op
         endfor
+        norm! zMzv
         unlet! s:fold_options_save
     endif
 endfu
