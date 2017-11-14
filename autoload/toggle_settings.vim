@@ -285,7 +285,7 @@ TS formatoptions
                 \ setl\ fo-=c
                 \ +c:\ auto-wrap\ comments\ ON
                 \ -c:\ auto-wrap\ comments\ OFF
-                \ index(split(&l:fo,'\\zs'),'c') != -1
+                \ index(split(&l:fo,'\\zs'),'c')>=0
 
 " We  can't pass  `OFF` to  `:TS`, because  the message  would be  automatically
 " erased when  there are several windows  in the current tabpage,  and we remove
@@ -347,7 +347,7 @@ TS nrformats
                 \ setl\ nf-=alpha
                 \ +alpha
                 \ -alpha
-                \ index(split(&l:nf,','),'alpha')!=-1
+                \ index(split(&l:nf,','),'alpha')>=0
 
 TS MatchParen
                 \ p
