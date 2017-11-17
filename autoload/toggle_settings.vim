@@ -27,6 +27,9 @@ let g:autoloaded_toggle_settings = 1
 " Prefer to manually quote the arguments, instead of using `<f-args>`.
 " Why?
 " It allows you to pass non strings data, like dictionaries.
+"
+" Except, of course, if all your arguments need to be quoted.
+" In this case, use `<f-args>`.
 "}}}
 com! -nargs=+ TS call s:toggle_settings(<args>)
 
