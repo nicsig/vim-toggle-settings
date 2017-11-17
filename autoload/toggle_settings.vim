@@ -3,7 +3,32 @@ if exists('g:autoloaded_toggle_settings')
 endif
 let g:autoloaded_toggle_settings = 1
 
-com! -nargs=+ TS call s:toggle_settings(<f-args>)
+" How to pass arguments to a custom command?{{{
+"
+" When you  must pass  strings as  arguments to  a function  called by  a custom
+" command, you must ask yourself 3 questions:
+"
+"         • do I quote the arguments?
+"         • do I separate them with commas?
+"         • do I use the escape sequence `<f-args>` or `<args>`?
+"
+" Here's what you get, depending on your answers:
+"
+"         • quote     +     `<f-args>`                 ✘ too much quotes (2x)
+"         • no quote  +  no `<f-args>`                 ✘ E121            (undefined variable)
+"         • quote     +  no comma       +  `<args>`    ✘ E116            (arguments not separated by commas)
+"}}}
+" Conclusions:{{{
+"
+"         • you must use commas, unless you use `<f-args>`
+"         • you must quote the arguments passed to the command, or use `<f-args>`
+"         • but not both
+"
+" Prefer to manually quote the arguments, instead of using `<f-args>`.
+" Why?
+" It allows you to pass non strings data, like dictionaries.
+"}}}
+com! -nargs=+ TS call s:toggle_settings(<args>)
 
 " WARNING{{{
 " Don't forget to properly handle repeated (dis)activations. {{{
@@ -232,22 +257,22 @@ endfu
 " Mappings {{{1
 " Simple "{{{2
 
-TS  cursorcolumn  o
-TS  hlsearch      h
-TS  list          I
-TS  spell         s
-TS  showcmd       W
-TS  wrap          w
+TS  'cursorcolumn', 'o'
+TS  'hlsearch'    , 'h'
+TS  'list'        , 'I'
+TS  'spell'       , 's'
+TS  'showcmd'     , 'W'
+TS  'wrap'        , 'w'
 
 " Complex {{{2
 
-TS showbreak
-                \ B
-                \ setl\ showbreak=↪
-                \ setl\ showbreak=
-                \ ON
-                \ OFF
-                \ !empty(&sbr)
+TS 'showbreak',
+\  'B',
+\  'setl showbreak=↪',
+\  'setl showbreak=',
+\  'ON',
+\  'OFF',
+\  '!empty(&sbr)'
 
 " In   our  vimrc   we  manually   set  `g:seoul256_background`   to  choose   a
 " custom  lightness.   When we  change  the  colorscheme,  from light  to  dark,
@@ -258,64 +283,64 @@ TS showbreak
 "
 " This  is not  what we  want. We want  a dark  one. So, we  must make  sure the
 " variable is deleted before trying to load the dark colorscheme.
-TS colorscheme
-                \ C
-                \ colo\ seoul256-light<bar>call\ <sid>cursorline(0)
-                \ unlet!\ g:seoul256_background\|colo\ seoul256<bar>call\ <sid>cursorline(1)
-                \ get(g:,'colors_name','')=~?'light'
+TS 'colorscheme',
+\  'C',
+\  'colo seoul256-light<bar>call <sid>cursorline(0)',
+\  'unlet! g:seoul256_background <bar> colo seoul256 <bar> call <sid>cursorline(1)',
+\  'get(g:, "colors_name", "") =~? "light"'
 
-TS conceal
-                \ c
-                \ setl\ cole=2
-                \ setl\ cole=3
-                \ Partial
-                \ Full
-                \ &l:cole==2
+TS 'conceal',
+\  'c',
+\  'setl cole=2',
+\  'setl cole=3',
+\  'Partial',
+\  'Full',
+\  '&l:cole==2'
 
-TS diff
-                \ d
-                \ diffthis
-                \ diffoff
-                \ ON
-                \ OFF
-                \ &l:diff
+TS 'diff',
+\  'd',
+\  'diffthis',
+\  'diffoff',
+\  'ON',
+\  'OFF',
+\  '&l:diff'
 
-TS formatoptions
-                \ f
-                \ setl\ fo+=c
-                \ setl\ fo-=c
-                \ +c:\ auto-wrap\ comments\ ON
-                \ -c:\ auto-wrap\ comments\ OFF
-                \ index(split(&l:fo,'\\zs'),'c')>=0
+TS 'formatoptions',
+\  'f',
+\  'setl fo+=c',
+\  'setl fo-=c',
+\  '+c: auto-wrap comments ON',
+\  '-c: auto-wrap comments OFF',
+\  'index(split(&l:fo, "\\zs"), "c") >= 0'
 
 " We  can't pass  `OFF` to  `:TS`, because  the message  would be  automatically
 " erased when  there are several windows  in the current tabpage,  and we remove
 " the autocmds.
-TS window\ height\ maximized
-                \ H
-                \ call\ <sid>win_height(1)
-                \ call\ <sid>win_height(0)
-                \ exists('#window_height')
+TS 'window height maximized',
+\  'H',
+\  'call <sid>win_height(1)',
+\  'call <sid>win_height(0)',
+\  'exists("#window_height")'
 
-TS stl\ list\ position
-                \ i
-                \ call\ <sid>stl_list_position(1)
-                \ call\ <sid>stl_list_position(0)
-                \ get(g:,'my_stl_list_position',0)==1
+TS 'stl list position',
+\  'i',
+\  'call <sid>stl_list_position(1)',
+\  'call <sid>stl_list_position(0)',
+\  'get(g:, "my_stl_list_position", 0) == 1'
 
-TS cursorline
-                \ l
-                \ call\ <sid>cursorline(1)
-                \ call\ <sid>cursorline(0)
-                \ ON
-                \ OFF
-                \ exists('#my_cursorline')
+TS 'cursorline',
+\  'l',
+\  'call <sid>cursorline(1)',
+\  'call <sid>cursorline(0)',
+\  'ON',
+\  'OFF',
+\  'exists("#my_cursorline")'
 
-TS number
-                \ n
-                \ setl\ number\ relativenumber
-                \ setl\ nonumber\ norelativenumber
-                \ &l:nu
+TS 'number',
+\  'n',
+\  'setl number relativenumber',
+\  'setl nonumber norelativenumber',
+\  '&l:nu'
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
@@ -342,63 +367,63 @@ TS number
 "     endfu
 "}}}
 
-TS nrformats
-                \ N
-                \ setl\ nf+=alpha
-                \ setl\ nf-=alpha
-                \ +alpha
-                \ -alpha
-                \ index(split(&l:nf,','),'alpha')>=0
+TS 'nrformats',
+\  'N',
+\  'setl nf+=alpha',
+\  'setl nf-=alpha',
+\  '+alpha',
+\  '-alpha',
+\  'index(split(&l:nf, ","), "alpha") >= 0'
 
-TS MatchParen
-                \ p
-                \ call\ <sid>matchparen(1)
-                \ call\ <sid>matchparen(0)
-                \ exists('g:loaded_matchparen')
+TS 'MatchParen',
+\  'p',
+\  'call <sid>matchparen(1)',
+\  'call <sid>matchparen(0)',
+\  'exists("g:loaded_matchparen")'
 
 " `gq` is  currently used  to format comments,  but it would  also be  useful to
 " execute formatting tools such as js-beautify.
-TS formatprg
-                \ q
-                \ call\ <sid>formatprg('global')
-                \ call\ <sid>formatprg('local')
-                \ &g:fp==#&l:fp
+TS 'formatprg',
+\  'q',
+\  'call <sid>formatprg("global")',
+\  'call <sid>formatprg("local")',
+\  '&g:fp ==# &l:fp'
 
-TS spelllang
-                \ S
-                \ setl\ spl=fr
-                \ setl\ spl=en
-                \ FR
-                \ EN
-                \ &l:spl==#'fr'
+TS 'spelllang',
+\  'S',
+\  'setl spl=fr',
+\  'setl spl=en',
+\  'FR',
+\  'EN',
+\  '&l:spl ==# "fr"'
 
-TS fold\ title
-                \ t
-                \ let\ b:my_title_full=1\|redraw!
-                \ let\ b:my_title_full=0\|redraw!
-                \ full
-                \ short
-                \ get(b:,'my_title_full',0)
+TS 'fold title',
+\  't',
+\  'let b:my_title_full=1 <bar> redraw!',
+\  'let b:my_title_full=0 <bar> redraw!',
+\  'full',
+\  'short',
+\  'get(b:, "my_title_full", 0)'
 
-TS virtualedit
-                \ v
-                \ call\ <sid>virtualedit('enable')
-                \ call\ <sid>virtualedit('disable')
-                \ ALL
-                \ ø
-                \ <sid>virtualedit('is_all')
+TS 'virtualedit',
+\  'v',
+\  'call <sid>virtualedit("enable")',
+\  'call <sid>virtualedit("disable")',
+\  'ALL',
+\  'ø',
+\  '<sid>virtualedit("is_all")'
 
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
-TS auto\ open\ folds
-                \ z
-                \ call\ <sid>auto_open_fold('enable')
-                \ call\ <sid>auto_open_fold('disable')
-                \ ON
-                \ OFF
-                \ <sid>auto_open_fold('is_active')
-                " │
-                " └─ We can't use a  script-local variable, because we can't
-                " access it from a mapping:
-                "
-                "            exists('s:my_var')       ✘
-                "            exists('<sid>my_var')    ✘
+TS 'auto open folds',
+\  'z',
+\  'call <sid>auto_open_fold("enable")',
+\  'call <sid>auto_open_fold("disable")',
+\  'ON',
+\  'OFF',
+\  '<sid>auto_open_fold("is_active")'
+"    │
+"    └─ We can't use a  script-local variable, because we can't
+"    access it from a mapping:
+"
+"               exists('s:my_var')       ✘
+"               exists('<sid>my_var')    ✘
