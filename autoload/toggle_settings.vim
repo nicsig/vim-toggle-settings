@@ -413,7 +413,7 @@ TS 'virtualedit',
 \  'call <sid>virtualedit("enable")',
 \  'call <sid>virtualedit("disable")',
 \  'ALL',
-\  'ø',
+\  '∅',
 \  '<sid>virtualedit("is_all")'
 
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
