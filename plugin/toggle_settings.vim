@@ -17,7 +17,7 @@ fu! s:lazy_load_toggle_settings(key) abort "{{{2
     endfor
 
     exe 'so '.fnameescape(s:autoload_script)
-    return a:key.'o'.nr2char(getchar())
+    return a:key.'o'.nr2char(getchar(),1)
 endfu
 
 " Mappings {{{1
