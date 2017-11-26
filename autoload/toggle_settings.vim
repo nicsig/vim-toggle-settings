@@ -246,7 +246,7 @@ fu! s:win_height(enable) abort "{{{2
     if a:enable
         augroup window_height
             au!
-            au WinEnter * call Window_height()
+            au WinEnter * call window#install_autocmd_to_set_height()
         augroup END
         echo '[window height maximized] ON'
     else
