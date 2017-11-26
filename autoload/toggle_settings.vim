@@ -242,21 +242,6 @@ fu! s:virtualedit(action) abort "{{{2
     redraws!
 endfu
 
-fu! s:win_height(enable) abort "{{{2
-    if a:enable
-        augroup window_height
-            au!
-            au WinEnter * call window#install_autocmd_to_set_height()
-        augroup END
-        echo '[window height maximized] ON'
-    else
-        sil! au! window_height
-        sil! aug! window_height
-        wincmd =
-        echo '[window height maximized] OFF'
-    endif
-endfu
-
 " Mappings {{{1
 " Simple "{{{2
 
@@ -315,15 +300,6 @@ TS 'formatoptions',
 \  '+c: auto-wrap comments ON',
 \  '-c: auto-wrap comments OFF',
 \  'index(split(&l:fo, "\\zs"), "c") >= 0'
-
-" We  can't pass  `OFF` to  `:TS`, because  the message  would be  automatically
-" erased when  there are several windows  in the current tabpage,  and we remove
-" the autocmds.
-TS 'window height maximized',
-\  'H',
-\  'call <sid>win_height(1)',
-\  'call <sid>win_height(0)',
-\  'exists("#window_height")'
 
 TS 'stl list position',
 \  'i',
