@@ -31,7 +31,6 @@ nmap <expr> <silent>  <plug>(lazy_load_[o)  <sid>lazy_load_toggle_settings('[')
 nmap                  ]o                                    <plug>(lazy_load_]o)
 nmap <expr> <silent>  <plug>(lazy_load_]o)  <sid>lazy_load_toggle_settings(']')
 
-" Options {{{1
 " Variables {{{1
 
 let s:autoload_script = expand('<sfile>:p:h:h').'/autoload/'.expand('<sfile>:t')
