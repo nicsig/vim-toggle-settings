@@ -281,8 +281,8 @@ TS 'conceal',
 \  'c',
 \  'let &l:cole = &ft ==# "markdown" ? 0 : 2',
 \  'let &l:cole = &ft ==# "markdown" ? 2 : 3',
-\  'Show',
-\  'Hide',
+\  'show',
+\  'hide',
 \  '&ft ==# "markdown" && &l:cole == 0 <bar><bar> &ft !=# "markdown" && &l:cole ==# 2'
 
 TS 'diff',
