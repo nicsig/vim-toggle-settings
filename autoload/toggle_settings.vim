@@ -279,11 +279,11 @@ TS 'colorscheme',
 
 TS 'conceal',
 \  'c',
-\  'setl cole=2',
-\  'setl cole=3',
-\  'Partial',
-\  'Full',
-\  '&l:cole==2'
+\  'let &l:cole = &ft ==# "markdown" ? 0 : 2',
+\  'let &l:cole = &ft ==# "markdown" ? 2 : 3',
+\  'Light',
+\  'Strong',
+\  '&ft ==# "markdown" && &l:cole == 0 <bar><bar> &ft !=# "markdown" && &l:cole ==# 2'
 
 TS 'diff',
 \  'd',
