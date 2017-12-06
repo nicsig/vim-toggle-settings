@@ -31,7 +31,6 @@ let g:autoloaded_toggle_settings = 1
 " Except, of course, if all your arguments need to be quoted.
 " In this case, use `<f-args>`.
 "}}}
-com! -nargs=+ TS call s:toggle_settings(<args>)
 
 " WARNING{{{
 " Don't forget to properly handle repeated (dis)activations. {{{
@@ -126,6 +125,194 @@ fu! s:auto_open_fold(action) abort "{{{2
     endif
 endfu
 
+fu! s:lightness(more) abort "{{{2
+    let is_light = g:seoul256_current_bg >= 252 && g:seoul256_current_bg <= 256
+
+    if is_light
+        " We need to make `g:seoul256_light_background` cycle through [ 252, 256 ].
+
+        " How to make a number `n` cycle through [a, a+1, …, a+p] ?{{{
+        "                                                 ^
+        "                                                 `n` will always be somewhere in the middle
+        "
+        " Let's simplify the pb, and cycle from 0 up to `p`. Solution:
+        "
+        "         • initialize `n` to 0
+        "         • use the formula  (n+1)%(p+1)  to update `n`
+        "                             └─┤ └────┤
+        "                               │      └ but don't go above `p`
+        "                               │        read this as:  “p+1 is off-limit”
+        "                               │
+        "                               └ increment
+        "
+        " To use this solution, we need to find a link between the problem we've
+        " just solved and our original problem.
+        " In the latter, what cycles between 0 and `p`?
+        "
+        "         the distance between `a` and `n`
+        "
+        " Updated_solution:
+        "                              before, it was `0`
+        "                              v
+        "         • initialize `n` to `a`
+        "
+        "         • use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
+        "                 ^                                           ^
+        "                 before, it was `n`                          before, it was `0`
+        "
+        " Let's formalize the last sentence, using  `d1`, `d2`, `n1` and `n2` to
+        " stand for the old / new distances and the old / new values of `n`:
+        "
+        "     ⇔    d2    = (  d1 + 1)%(p+1)
+        "     ⇔ n2 - a   = (n1-a + 1)%(p+1)
+        "
+        "                                   ┌ final formula
+        "                  ┌────────────────┤
+        "     ⇔ n2       = (n1-a +1)%(p+1) +a
+        "                   └─────┤ └────┤ └┤
+        "                         │      │  └ we want the distance from 0, not from `a`, so add `a`
+        "                         │      │
+        "                         │      └ but don't go too far
+        "                         │
+        "                         └ move away (+1) from `a` (n1-a)
+    "}}}
+        " How to make a number cycle through [a+p, a+p-1, …, a] ?{{{
+        "
+        " We want to cycle from `a+p` down to `a`.
+        "
+        "         • initialize `n` to `a+p`
+        "         • use the formula  (d+1)%(p+1)  to update the DISTANCE between `n` and `a+p`
+        "
+        " Formalization:
+        "
+        "            d2   = (    d1   + 1)%(p+1)
+        "      ⇔ a+p - n2 = (a+p - n1 + 1)%(p+1)
+        "                                             ┌ final formula
+        "                     ┌───────────────────────┤
+        "      ⇔         n2 = a+p - (a+p - n1 +1)%(p+1)
+        "                     └─┤    └─────────┤ └────┤
+        "                       │              │      └ but don't go too far
+        "                       │              │        read this as:  “a+p is off-limit”
+        "                       │              │
+        "                       │              └ move away (+1) from `a+p` (a+p - n1)
+        "                       │
+        "                       └ we want the distance from 0, not from `a+p`, so add `a+p`
+        "}}}
+
+        "   ┌ value to be used the NEXT time we execute `:colo seoul256-light`
+        "   │
+        let g:seoul256_light_background = get(g:, 'seoul256_light_background', 253)
+
+        " update `g:seoul256_light_background`
+        let g:seoul256_light_background = a:more
+        \?        (g:seoul256_light_background - 252 + 1)%(4+1) + 252
+        \:        256 - (256 - g:seoul256_light_background +1)%(4+1)
+
+        " update colorscheme
+        colo seoul256-light
+        " get info to display in a message
+        let level = g:seoul256_light_background - 252 + 1
+    else
+        " We need to make `g:seoul256_background` cycle through [ 233, 239 ].
+
+        "   ┌ value to be used the NEXT time we execute `:colo seoul256`
+        "   │
+        let g:seoul256_background = get(g:, 'seoul256_background', 237)
+
+        let g:seoul256_background = a:more
+        \?        (g:seoul256_background - 233 + 1)%(6+1) + 233
+        \:        239 - (239 - g:seoul256_background +1)%(6+1)
+
+        colo seoul256
+        let level = g:seoul256_background - 233 + 1
+    endif
+
+    " Why the timer?{{{
+    "
+    " When you  want to echo a  message from a  function, there are 3  parameters to
+    " consider.
+    "
+    "         1. Is 'lazyredraw' set or not?
+    "         2. Is the function called from an <expr> mapping?
+    "         3. Do you echo now, or later (timer, feedkeys())?
+    "
+    " There are 8  possibilities. Atm, some of them fail either  because the message
+    " is immediately  erased, or  because the  cursor is  stuck on  the command-line
+    " after  the message  (once out  of 2),  and the  change of  colorscheme is  not
+    " visible while the cursor is stuck.
+    " Reproduce:
+    "
+    "         nno <expr> cd Func()
+    "         fu! Func() abort
+    "             echo 'hello'
+    "             return ''
+    "         endfu
+    "
+    "  In  Vim, this  can be  solved  by calling  `redraw` from  a timer  inside
+    " `Func()`:
+    "
+    "             call timer_start(0, {-> execute('redraw')})
+    "
+    " … but it doesn't work in Neovim.
+    "
+    " The working possibilities are different for Vim and Neovim:
+    "
+    "         Vim:
+    "
+    "          ┌─ is 'lz' set?
+    "          │  ┌─ do you use <expr>?
+    "          │  │  ┌─ do you echo now?
+    "          │  │  │
+    "         [0, 0, 0]
+    "         [1, 0, 0]
+    "         [1, 1, 0]
+    "
+    "         Neovim:
+    "
+    "         [0, 0, 0]
+    "         [0, 0, 1]
+    "         [1, 0, 0]
+    "         [1, 0, 1]
+    "         [1, 1, 1]
+    "
+    " Solutions which work for Vim AND Neovim:    [0,0,0]
+    "                                             [1,0,0]
+    "
+    " Conclusions:
+    " In Vim do NOT echo now, and do NOT enable 'lz' with an <expr> mapping.
+    " In Neovim, do NOT use <expr>, unless you enable 'lz' and you echo now.
+    "
+    " To write a function which echo a message, and which will work in both,
+    " do NOT use <expr>, and do NOT echo now.
+"}}}
+    call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
+    let g:motion_to_repeat = (a:more ? ']' : '[').'oL'
+    return ''
+endfu
+
+fu! s:conceallevel(fwd) abort "{{{2
+    let new_val = a:fwd
+    \?                (&l:cole + 1)%(3+1)
+    \:                3 - (3 - &l:cole + 1)%(3+1)
+
+    " We are not interested in level 1.
+    " The 3 other levels are enough. If I want to see:
+    "
+    "     • everything = 0
+    "
+    "     • what is useful = 2
+    "       has a replacement character: `cchar`, {'conceal': 'x'}
+    "
+    "     • nothing = 3
+    if new_val == 1
+        let new_val = a:fwd ? 2 : 0
+    endif
+
+    let &l:cole = new_val
+    let g:motion_to_repeat = (a:fwd ? ']' : '[').'oc'
+    echo '[conceallevel] '.&l:cole
+endfu
+
 fu! s:cursorline(enable) abort "{{{2
     " 'cursorline' only in the active window and not in insert mode.
     if a:enable
@@ -205,15 +392,30 @@ fu! s:toggle_settings(...) abort "{{{2
         \          .'<bar>    exe '.string(cmd1)
         \          .'<bar>endif'
 
-        exe 'nno <silent> [o'.letter.' :<c-u>'.cmd1.'<cr>'
-        exe 'nno <silent> ]o'.letter.' :<c-u>'.cmd2.'<cr>'
-        exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
+        exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>'.cmd1.'<cr>'
+        exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>'.cmd2.'<cr>'
+        exe 'nno  <silent><unique>  co'.letter.'  :<c-u>'.rhs3.'<cr>'
+
+        return
+
+    elseif a:0 == 3
+        let [ a_func, letter, val ] = [ a:1, a:2, a:3 ]
+        exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
+        exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
+        " exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(2)<cr>'
 
         return
 
     elseif a:0 == 2
-        let [ label, letter, cmd1, cmd2, msg1, msg2, test ] =
-          \ [ a:1, a:2, 'setl '.a:1, 'setl no'.a:1, '['.a:1.'] ON', '['.a:1.'] OFF', '&l:'.a:1 ]
+        let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = [
+        \                                                       a:1,
+        \                                                       a:2,
+        \                                                       'setl '.a:1,
+        \                                                       'setl no'.a:1,
+        \                                                       '['.a:1.'] ON',
+        \                                                       '['.a:1.'] OFF',
+        \                                                       '&l:'.a:1,
+        \                                                     ]
     else
         return
     endif
@@ -224,9 +426,9 @@ fu! s:toggle_settings(...) abort "{{{2
     \          .'<bar>    exe '.string(cmd1).'<bar>echo '.string(msg1)
     \          .'<bar>endif'
 
-    exe 'nno <silent> [o'.letter.' :<c-u>'.cmd1.'<bar>echo '.string(msg1).'<cr>'
-    exe 'nno <silent> ]o'.letter.' :<c-u>'.cmd2.'<bar>echo '.string(msg2).'<cr>'
-    exe 'nno <silent> co'.letter.' :<c-u>'.rhs3.'<cr>'
+    exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>'.cmd1.'<bar>echo '.string(msg1).'<cr>'
+    exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>'.cmd2.'<bar>echo '.string(msg2).'<cr>'
+    exe 'nno  <silent><unique>  co'.letter.'  :<c-u>'.rhs3.'<cr>'
 endfu
 
 fu! s:virtualedit(action) abort "{{{2
@@ -245,22 +447,22 @@ endfu
 " Mappings {{{1
 " Simple "{{{2
 
-TS  'cursorcolumn', 'o'
-TS  'hlsearch'    , 'h'
-TS  'list'        , 'I'
-TS  'spell'       , 's'
-TS  'showcmd'     , 'W'
-TS  'wrap'        , 'w'
+call s:toggle_settings('cursorcolumn', 'o')
+call s:toggle_settings('hlsearch'    , 'h')
+call s:toggle_settings('list'        , 'I')
+call s:toggle_settings('spell'       , 's')
+call s:toggle_settings('showcmd'     , 'W')
+call s:toggle_settings('wrap'        , 'w')
 
 " Complex {{{2
 
-TS 'showbreak',
-\  'B',
-\  'setl showbreak=↪',
-\  'setl showbreak=',
-\  'ON',
-\  'OFF',
-\  '!empty(&sbr)'
+call s:toggle_settings('showbreak',
+\                      'B',
+\                      'setl showbreak=↪',
+\                      'setl showbreak=',
+\                      'ON',
+\                      'OFF',
+\                      '!empty(&sbr)')
 
 " In   our  vimrc   we  manually   set  `g:seoul256_background`   to  choose   a
 " custom  lightness.   When we  change  the  colorscheme,  from light  to  dark,
@@ -271,55 +473,56 @@ TS 'showbreak',
 "
 " This  is not  what we  want. We want  a dark  one. So, we  must make  sure the
 " variable is deleted before trying to load the dark colorscheme.
-TS 'colorscheme',
-\  'C',
-\  'colo seoul256-light<bar>call <sid>cursorline(0)',
-\  'unlet! g:seoul256_background <bar> colo seoul256 <bar> call <sid>cursorline(1)',
-\  'get(g:, "colors_name", "") =~? "light"'
+call s:toggle_settings('colorscheme',
+\                      'C',
+\                      'colo seoul256-light<bar>call <sid>cursorline(0)',
+\                      'unlet! g:seoul256_background <bar> colo seoul256 <bar> call <sid>cursorline(1)',
+\                      'get(g:, "colors_name", "") =~? "light"')
 
-TS 'conceal',
-\  'c',
-\  'setl cole=2',
-\  'setl cole=3',
-\  'show',
-\  'hide',
-\  '&l:cole==2'
+call s:toggle_settings('conceallevel',
+\                      'c',
+\                      '3')
 
-TS 'diff',
-\  'd',
-\  'diffthis',
-\  'diffoff',
-\  'ON',
-\  'OFF',
-\  '&l:diff'
+call s:toggle_settings('diff',
+\                      'd',
+\                      'diffthis',
+\                      'diffoff',
+\                      'ON',
+\                      'OFF',
+\                      '&l:diff')
 
-TS 'formatoptions',
-\  'f',
-\  'setl fo+=c',
-\  'setl fo-=c',
-\  '+c: auto-wrap comments ON',
-\  '-c: auto-wrap comments OFF',
-\  'index(split(&l:fo, "\\zs"), "c") >= 0'
+call s:toggle_settings('formatoptions',
+\                      'f',
+\                      'setl fo+=c',
+\                      'setl fo-=c',
+\                      '+c: auto-wrap comments ON',
+\                      '-c: auto-wrap comments OFF',
+\                      'index(split(&l:fo, "\\zs"), "c") >= 0')
 
-TS 'stl list position',
-\  'i',
-\  'call <sid>stl_list_position(1)',
-\  'call <sid>stl_list_position(0)',
-\  'get(g:, "my_stl_list_position", 0) == 1'
+call s:toggle_settings('stl list position',
+\                      'i',
+\                      'call <sid>stl_list_position(1)',
+\                      'call <sid>stl_list_position(0)',
+\                      'get(g:, "my_stl_list_position", 0) == 1')
 
-TS 'cursorline',
-\  'l',
-\  'call <sid>cursorline(1)',
-\  'call <sid>cursorline(0)',
-\  'ON',
-\  'OFF',
-\  'exists("#my_cursorline")'
+call s:toggle_settings('cursorline',
+\                      'l',
+\                      'call <sid>cursorline(1)',
+\                      'call <sid>cursorline(0)',
+\                      'ON',
+\                      'OFF',
+\                      'exists("#my_cursorline")')
 
-TS 'number',
-\  'n',
-\  'setl number relativenumber',
-\  'setl nonumber norelativenumber',
-\  '&l:nu'
+" Do NOT use `]L`: it's already taken to move to the last entry in the ll.
+call s:toggle_settings('lightness',
+\                      'L',
+\                      '253' )
+
+call s:toggle_settings('number',
+\                      'n',
+\                      'setl number relativenumber',
+\                      'setl nonumber norelativenumber',
+\                      '&l:nu')
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
@@ -346,63 +549,63 @@ TS 'number',
 "     endfu
 "}}}
 
-TS 'nrformats',
-\  'N',
-\  'setl nf+=alpha',
-\  'setl nf-=alpha',
-\  '+alpha',
-\  '-alpha',
-\  'index(split(&l:nf, ","), "alpha") >= 0'
+call s:toggle_settings('nrformats',
+\                      'N',
+\                      'setl nf+=alpha',
+\                      'setl nf-=alpha',
+\                      '+alpha',
+\                      '-alpha',
+\                      'index(split(&l:nf, ","), "alpha") >= 0')
 
-TS 'MatchParen',
-\  'p',
-\  'call <sid>matchparen(1)',
-\  'call <sid>matchparen(0)',
-\  'exists("g:loaded_matchparen")'
+call s:toggle_settings('MatchParen',
+\                      'p',
+\                      'call <sid>matchparen(1)',
+\                      'call <sid>matchparen(0)',
+\                      'exists("g:loaded_matchparen")')
 
 " `gq` is  currently used  to format comments,  but it would  also be  useful to
 " execute formatting tools such as js-beautify.
-TS 'formatprg',
-\  'q',
-\  'call <sid>formatprg("global")',
-\  'call <sid>formatprg("local")',
-\  '&g:fp ==# &l:fp'
+call s:toggle_settings('formatprg',
+\                      'q',
+\                      'call <sid>formatprg("global")',
+\                      'call <sid>formatprg("local")',
+\                      '&g:fp ==# &l:fp')
 
-TS 'spelllang',
-\  'S',
-\  'setl spl=fr',
-\  'setl spl=en',
-\  'FR',
-\  'EN',
-\  '&l:spl ==# "fr"'
+call s:toggle_settings('spelllang',
+\                      'S',
+\                      'setl spl=fr',
+\                      'setl spl=en',
+\                      'FR',
+\                      'EN',
+\                      '&l:spl ==# "fr"')
 
-TS 'fold title',
-\  't',
-\  'let b:my_title_full=1 <bar> redraw!',
-\  'let b:my_title_full=0 <bar> redraw!',
-\  'full',
-\  'short',
-\  'get(b:, "my_title_full", 0)'
+call s:toggle_settings('fold title',
+\                      't',
+\                      'let b:my_title_full=1 <bar> redraw!',
+\                      'let b:my_title_full=0 <bar> redraw!',
+\                      'full',
+\                      'short',
+\                      'get(b:, "my_title_full", 0)')
 
-TS 'virtualedit',
-\  'v',
-\  'call <sid>virtualedit("enable")',
-\  'call <sid>virtualedit("disable")',
-\  'ALL',
-\  '∅',
-\  '<sid>virtualedit("is_all")'
+call s:toggle_settings('virtualedit',
+\                      'v',
+\                      'call <sid>virtualedit("enable")',
+\                      'call <sid>virtualedit("disable")',
+\                      'ALL',
+\                      "\u2205",
+\                      '<sid>virtualedit("is_all")')
 
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
-TS 'auto open folds',
-\  'z',
-\  'call <sid>auto_open_fold("enable")',
-\  'call <sid>auto_open_fold("disable")',
-\  'ON',
-\  'OFF',
-\  '<sid>auto_open_fold("is_active")'
-"    │
-"    └─ We can't use a  script-local variable, because we can't
-"    access it from a mapping:
+call s:toggle_settings('auto open folds',
+\                      'z',
+\                      'call <sid>auto_open_fold("enable")',
+\                      'call <sid>auto_open_fold("disable")',
+\                      'ON',
+\                      'OFF',
+\                      '<sid>auto_open_fold("is_active")')
+"                        │
+"                        └─ We can't use a  script-local variable, because we can't
+"                           access it from a mapping:
 "
-"               exists('s:my_var')       ✘
-"               exists('<sid>my_var')    ✘
+"                                   exists('s:my_var')       ✘
+"                                   exists('<sid>my_var')    ✘
