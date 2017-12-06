@@ -22,14 +22,14 @@ endfu
 
 " Mappings {{{1
 
-nmap                  co                                    <plug>(lazy_load_co)
-nmap <expr> <silent>  <plug>(lazy_load_co)  <sid>lazy_load_toggle_settings('c')
+nmap                  co                    <plug>(lazy_load_co)
+nmap  <expr><silent>  <plug>(lazy_load_co)  <sid>lazy_load_toggle_settings('c')
 
-nmap                  [o                                    <plug>(lazy_load_[o)
-nmap <expr> <silent>  <plug>(lazy_load_[o)  <sid>lazy_load_toggle_settings('[')
+nmap                  [o                    <plug>(lazy_load_[o)
+nmap  <expr><silent>  <plug>(lazy_load_[o)  <sid>lazy_load_toggle_settings('[')
 
-nmap                  ]o                                    <plug>(lazy_load_]o)
-nmap <expr> <silent>  <plug>(lazy_load_]o)  <sid>lazy_load_toggle_settings(']')
+nmap                  ]o                    <plug>(lazy_load_]o)
+nmap  <expr><silent>  <plug>(lazy_load_]o)  <sid>lazy_load_toggle_settings(']')
 
 " Variables {{{1
 
