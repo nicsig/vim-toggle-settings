@@ -125,7 +125,15 @@ fu! s:auto_open_fold(action) abort "{{{2
     endif
 endfu
 
-fu! s:lightness(more) abort "{{{2
+fu! s:lightness(more, ...) abort "{{{2
+    if a:0
+        let g:seoul256_light_background = g:seoul256_light_background == a:1 ? a:2 : a:1
+        colo seoul256-light
+        let level = g:seoul256_light_background - 252 + 1
+        call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
+        return
+    endif
+
     let is_light = g:seoul256_current_bg >= 252 && g:seoul256_current_bg <= 256
 
     if is_light
@@ -290,7 +298,13 @@ fu! s:lightness(more) abort "{{{2
     return ''
 endfu
 
-fu! s:conceallevel(fwd) abort "{{{2
+fu! s:conceallevel(fwd, ...) abort "{{{2
+    if a:0
+        let &l:cole = &l:cole == a:1 ? a:2 : a:1
+        echo '[conceallevel] '.&l:cole
+        return
+    endif
+
     let new_val = a:fwd
     \?                (&l:cole + 1)%(3+1)
     \:                3 - (3 - &l:cole + 1)%(3+1)
@@ -377,6 +391,11 @@ fu! s:stl_list_position(enable) abort "{{{2
     redraws!
 endfu
 
+fu! s:verbose_errors(enable) abort "{{{2
+    let g:my_verbose_errors = a:enable ? 1 : 0
+    echo '[verbose errors] '.(g:my_verbose_errors ? 'ON' : 'OFF')
+endfu
+
 fu! s:toggle_settings(...) abort "{{{2
     if a:0 == 7
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
@@ -399,10 +418,10 @@ fu! s:toggle_settings(...) abort "{{{2
         return
 
     elseif a:0 == 3
-        let [ a_func, letter, val ] = [ a:1, a:2, a:3 ]
+        let [ a_func, letter, values ] = [ a:1, a:2, eval(a:3) ]
         exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
         exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
-        " exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(2)<cr>'
+        exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
 
         return
 
@@ -445,25 +464,33 @@ fu! s:virtualedit(action) abort "{{{2
 endfu
 
 " Mappings {{{1
-" Simple "{{{2
+" 2 "{{{2
 
-call s:toggle_settings('cursorcolumn', 'o')
-call s:toggle_settings('hlsearch'    , 'h')
-call s:toggle_settings('list'        , 'I')
-call s:toggle_settings('spell'       , 's')
-call s:toggle_settings('showcmd'     , 'W')
-call s:toggle_settings('wrap'        , 'w')
+call s:toggle_settings('cursorcolumn'  , 'o')
+call s:toggle_settings('hlsearch'      , 'h')
+call s:toggle_settings('list'          , 'I')
+call s:toggle_settings('showcmd'       , 'W')
+call s:toggle_settings('spell'         , 's')
+call s:toggle_settings('wrap'          , 'w')
 
-" Complex {{{2
+" 3 {{{2
 
-call s:toggle_settings('showbreak',
-\                      'B',
-\                      'setl showbreak=↪',
-\                      'setl showbreak=',
-\                      'ON',
-\                      'OFF',
-\                      '!empty(&sbr)')
+call s:toggle_settings('conceallevel',
+\                      'c',
+\                      '[0, 3]')
 
+" Do NOT use `]L`: it's already taken to move to the last entry in the ll.
+call s:toggle_settings('lightness',
+\                      'L',
+\                      '[253, 256]' )
+" TODO:
+"
+" The mapping should toggle between [233, 237] when the colorscheme is dark.
+
+" 5 {{{2
+
+" Why unletting `g:seoul256_background`?{{{
+"
 " In   our  vimrc   we  manually   set  `g:seoul256_background`   to  choose   a
 " custom  lightness.   When we  change  the  colorscheme,  from light  to  dark,
 " `g:seoul256_background` has a value which will be interpreted as the desire to
@@ -473,56 +500,26 @@ call s:toggle_settings('showbreak',
 "
 " This  is not  what we  want. We want  a dark  one. So, we  must make  sure the
 " variable is deleted before trying to load the dark colorscheme.
+"}}}
 call s:toggle_settings('colorscheme',
 \                      'C',
 \                      'colo seoul256-light<bar>call <sid>cursorline(0)',
 \                      'unlet! g:seoul256_background <bar> colo seoul256 <bar> call <sid>cursorline(1)',
 \                      'get(g:, "colors_name", "") =~? "light"')
 
-call s:toggle_settings('conceallevel',
-\                      'c',
-\                      '3')
-
-call s:toggle_settings('diff',
-\                      'd',
-\                      'diffthis',
-\                      'diffoff',
-\                      'ON',
-\                      'OFF',
-\                      '&l:diff')
-
-call s:toggle_settings('formatoptions',
-\                      'f',
-\                      'setl fo+=c',
-\                      'setl fo-=c',
-\                      '+c: auto-wrap comments ON',
-\                      '-c: auto-wrap comments OFF',
-\                      'index(split(&l:fo, "\\zs"), "c") >= 0')
+" Mnemonics:
+" D for Debug
+call s:toggle_settings('verbose errors',
+\                      'D',
+\                      'call <sid>verbose_errors(1)',
+\                      'call <sid>verbose_errors(0)',
+\                      'get(g:, "my_verbose_errors", 0) == 1')
 
 call s:toggle_settings('stl list position',
 \                      'i',
 \                      'call <sid>stl_list_position(1)',
 \                      'call <sid>stl_list_position(0)',
 \                      'get(g:, "my_stl_list_position", 0) == 1')
-
-call s:toggle_settings('cursorline',
-\                      'l',
-\                      'call <sid>cursorline(1)',
-\                      'call <sid>cursorline(0)',
-\                      'ON',
-\                      'OFF',
-\                      'exists("#my_cursorline")')
-
-" Do NOT use `]L`: it's already taken to move to the last entry in the ll.
-call s:toggle_settings('lightness',
-\                      'L',
-\                      '253' )
-
-call s:toggle_settings('number',
-\                      'n',
-\                      'setl number relativenumber',
-\                      'setl nonumber norelativenumber',
-\                      '&l:nu')
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
@@ -548,14 +545,11 @@ call s:toggle_settings('number',
 "           \ }[&l:nu.&l:rnu]
 "     endfu
 "}}}
-
-call s:toggle_settings('nrformats',
-\                      'N',
-\                      'setl nf+=alpha',
-\                      'setl nf-=alpha',
-\                      '+alpha',
-\                      '-alpha',
-\                      'index(split(&l:nf, ","), "alpha") >= 0')
+call s:toggle_settings('number',
+\                      'n',
+\                      'setl number relativenumber',
+\                      'setl nonumber norelativenumber',
+\                      '&l:nu')
 
 call s:toggle_settings('MatchParen',
 \                      'p',
@@ -570,6 +564,48 @@ call s:toggle_settings('formatprg',
 \                      'call <sid>formatprg("global")',
 \                      'call <sid>formatprg("local")',
 \                      '&g:fp ==# &l:fp')
+
+" 7 {{{2
+
+call s:toggle_settings('showbreak',
+\                      'B',
+\                      'setl showbreak=↪',
+\                      'setl showbreak=',
+\                      'ON',
+\                      'OFF',
+\                      '!empty(&sbr)')
+
+call s:toggle_settings('diff',
+\                      'd',
+\                      'diffthis',
+\                      'diffoff',
+\                      'ON',
+\                      'OFF',
+\                      '&l:diff')
+
+call s:toggle_settings('formatoptions',
+\                      'f',
+\                      'setl fo+=c',
+\                      'setl fo-=c',
+\                      '+c: auto-wrap comments ON',
+\                      '-c: auto-wrap comments OFF',
+\                      'index(split(&l:fo, "\\zs"), "c") >= 0')
+
+call s:toggle_settings('cursorline',
+\                      'l',
+\                      'call <sid>cursorline(1)',
+\                      'call <sid>cursorline(0)',
+\                      'ON',
+\                      'OFF',
+\                      'exists("#my_cursorline")')
+
+call s:toggle_settings('nrformats',
+\                      'N',
+\                      'setl nf+=alpha',
+\                      'setl nf-=alpha',
+\                      '+alpha',
+\                      '-alpha',
+\                      'index(split(&l:nf, ","), "alpha") >= 0')
 
 call s:toggle_settings('spelllang',
 \                      'S',
