@@ -125,6 +125,81 @@ fu! s:auto_open_fold(action) abort "{{{2
     endif
 endfu
 
+fu! s:conceallevel(fwd, ...) abort "{{{2
+    if a:0
+        let &l:cole = &l:cole == a:1 ? a:2 : a:1
+        echo '[conceallevel] '.&l:cole
+        return
+    endif
+
+    let new_val = a:fwd
+    \?                (&l:cole + 1)%(3+1)
+    \:                3 - (3 - &l:cole + 1)%(3+1)
+
+    " We are not interested in level 1.
+    " The 3 other levels are enough. If I want to see:
+    "
+    "     • everything = 0
+    "
+    "     • what is useful = 2
+    "       has a replacement character: `cchar`, {'conceal': 'x'}
+    "
+    "     • nothing = 3
+    if new_val == 1
+        let new_val = a:fwd ? 2 : 0
+    endif
+
+    let &l:cole = new_val
+    let g:motion_to_repeat = (a:fwd ? ']' : '[').'oc'
+    echo '[conceallevel] '.&l:cole
+endfu
+
+fu! s:cursorline(enable) abort "{{{2
+    " 'cursorline' only in the active window and not in insert mode.
+    if a:enable
+        setl cursorline
+        augroup my_cursorline
+            au!
+            au VimEnter,WinEnter * setl cursorline
+            au WinLeave          * setl nocursorline
+            au InsertEnter       * setl nocursorline
+            au InsertLeave       * setl cursorline
+        augroup END
+    else
+        setl nocursorline
+        sil! au! my_cursorline
+        sil! aug! my_cursorline
+    endif
+endfu
+
+fu! s:formatprg(scope) abort "{{{2
+    if a:scope ==# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
+        if !exists('s:local_fp_save')
+            let s:local_fp_save = {}
+        endif
+        " use a dictionary to  save the local value of 'fp'  in any buffer where
+        " we use our mappings to toggle the latter
+        let s:local_fp_save[bufnr('%')] = &l:fp
+        setl fp<
+    elseif a:scope ==# 'local' && exists('s:local_fp_save') && has_key(s:local_fp_save, bufnr('%'))
+        " `js-beautify` is a formatting tool for js, html, css.
+        "
+        " Installation:
+        "
+        "         sudo npm -g install js-beautify
+        "
+        " Documentation:
+        "
+        "         https://github.com/beautify-web/js-beautify
+        "
+        " The tool has  many options, you can use the  ones you find interesting
+        " in the value of 'fp'.
+        let &l:fp = get(s:local_fp_save, bufnr('%'), &l:fp)
+        unlet! s:local_fp_save[bufnr('%')]
+    endif
+    echo '[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)
+endfu
+
 fu! s:lightness(more, ...) abort "{{{2
     if a:0
         let g:seoul256_light_background = g:seoul256_light_background == a:1 ? a:2 : a:1
@@ -298,81 +373,6 @@ fu! s:lightness(more, ...) abort "{{{2
     return ''
 endfu
 
-fu! s:conceallevel(fwd, ...) abort "{{{2
-    if a:0
-        let &l:cole = &l:cole == a:1 ? a:2 : a:1
-        echo '[conceallevel] '.&l:cole
-        return
-    endif
-
-    let new_val = a:fwd
-    \?                (&l:cole + 1)%(3+1)
-    \:                3 - (3 - &l:cole + 1)%(3+1)
-
-    " We are not interested in level 1.
-    " The 3 other levels are enough. If I want to see:
-    "
-    "     • everything = 0
-    "
-    "     • what is useful = 2
-    "       has a replacement character: `cchar`, {'conceal': 'x'}
-    "
-    "     • nothing = 3
-    if new_val == 1
-        let new_val = a:fwd ? 2 : 0
-    endif
-
-    let &l:cole = new_val
-    let g:motion_to_repeat = (a:fwd ? ']' : '[').'oc'
-    echo '[conceallevel] '.&l:cole
-endfu
-
-fu! s:cursorline(enable) abort "{{{2
-    " 'cursorline' only in the active window and not in insert mode.
-    if a:enable
-        setl cursorline
-        augroup my_cursorline
-            au!
-            au VimEnter,WinEnter * setl cursorline
-            au WinLeave          * setl nocursorline
-            au InsertEnter       * setl nocursorline
-            au InsertLeave       * setl cursorline
-        augroup END
-    else
-        setl nocursorline
-        sil! au! my_cursorline
-        sil! aug! my_cursorline
-    endif
-endfu
-
-fu! s:formatprg(scope) abort "{{{2
-    if a:scope ==# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
-        if !exists('s:local_fp_save')
-            let s:local_fp_save = {}
-        endif
-        " use a dictionary to  save the local value of 'fp'  in any buffer where
-        " we use our mappings to toggle the latter
-        let s:local_fp_save[bufnr('%')] = &l:fp
-        setl fp<
-    elseif a:scope ==# 'local' && exists('s:local_fp_save') && has_key(s:local_fp_save, bufnr('%'))
-        " `js-beautify` is a formatting tool for js, html, css.
-        "
-        " Installation:
-        "
-        "         sudo npm -g install js-beautify
-        "
-        " Documentation:
-        "
-        "         https://github.com/beautify-web/js-beautify
-        "
-        " The tool has  many options, you can use the  ones you find interesting
-        " in the value of 'fp'.
-        let &l:fp = get(s:local_fp_save, bufnr('%'), &l:fp)
-        unlet! s:local_fp_save[bufnr('%')]
-    endif
-    echo '[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)
-endfu
-
 fu! s:matchparen(enable) abort "{{{2
     if empty(globpath(&rtp, 'plugin/my_matchparen.vim', 0, 1, 1))
         echo printf('no  %s  file was found in the runtimepath', 'plugin/matchparen.vim')
@@ -389,11 +389,6 @@ endfu
 fu! s:stl_list_position(enable) abort "{{{2
     let g:my_stl_list_position = a:enable ? 1 : 0
     redraws!
-endfu
-
-fu! s:verbose_errors(enable) abort "{{{2
-    let g:my_verbose_errors = a:enable ? 1 : 0
-    echo '[verbose errors] '.(g:my_verbose_errors ? 'ON' : 'OFF')
 endfu
 
 fu! s:toggle_settings(...) abort "{{{2
@@ -448,6 +443,11 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>'.cmd1.'<bar>echo '.string(msg1).'<cr>'
     exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>'.cmd2.'<bar>echo '.string(msg2).'<cr>'
     exe 'nno  <silent><unique>  co'.letter.'  :<c-u>'.rhs3.'<cr>'
+endfu
+
+fu! s:verbose_errors(enable) abort "{{{2
+    let g:my_verbose_errors = a:enable ? 1 : 0
+    echo '[verbose errors] '.(g:my_verbose_errors ? 'ON' : 'OFF')
 endfu
 
 fu! s:virtualedit(action) abort "{{{2
