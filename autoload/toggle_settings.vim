@@ -1,8 +1,3 @@
-if exists('g:autoloaded_toggle_settings')
-    finish
-endif
-let g:autoloaded_toggle_settings = 1
-
 " How to pass arguments to a custom command?{{{
 "
 " When you  must pass  strings as  arguments to  a function  called by  a custom
