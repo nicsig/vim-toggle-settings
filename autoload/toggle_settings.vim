@@ -381,9 +381,18 @@ fu! s:matchparen(enable) abort "{{{2
     echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
 endfu
 
-fu! s:stl_list_position(enable) abort "{{{2
-    let g:my_stl_list_position = a:enable ? 1 : 0
-    redraws!
+fu! s:stl_list_position(fwd, ...) abort "{{{2
+    if a:0
+        let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == a:1 ? a:2 : a:1
+        return
+    endif
+
+    let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0)
+    let g:my_stl_list_position = a:fwd
+    \?                (g:my_stl_list_position + 1)%(2+1)
+    \:                2 - (2 - g:my_stl_list_position + 1)%(2+1)
+
+    let g:motion_to_repeat = (a:fwd ? ']' : '[').'oi'
 endfu
 
 fu! s:toggle_settings(...) abort "{{{2
@@ -474,6 +483,10 @@ call s:toggle_settings('conceallevel',
 \                      'c',
 \                      '[0, 3]')
 
+call s:toggle_settings('stl_list_position',
+\                      'i',
+\                      '[0, 1]')
+
 " Do NOT use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('lightness',
 \                      'L',
@@ -509,12 +522,6 @@ call s:toggle_settings('verbose errors',
 \                      'call <sid>verbose_errors(1)',
 \                      'call <sid>verbose_errors(0)',
 \                      'get(g:, "my_verbose_errors", 0) == 1')
-
-call s:toggle_settings('stl list position',
-\                      'i',
-\                      'call <sid>stl_list_position(1)',
-\                      'call <sid>stl_list_position(0)',
-\                      'get(g:, "my_stl_list_position", 0) == 1')
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
