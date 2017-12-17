@@ -205,7 +205,13 @@ endfu
 
 fu! s:hl_yanked_text() abort "{{{2
     try
-        if v:event.operator != 'y'
+        "                        ┌ don't highlight anything if we didn't copy anything
+        "                        │
+        "                        │                          ┌ don't highlight anything if Vim has copied
+        "                        │                          │ the visual selection in `*` after we leave
+        "                        │                          │ visual mode
+        "  ┌─────────────────────┤    ┌─────────────────────┤
+        if v:event.operator != 'y' || v:event.regname ==# '*'
             return
         endif
 
