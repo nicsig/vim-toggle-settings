@@ -223,7 +223,7 @@ fu! s:hl_yanked_text() abort "{{{2
         endif
 
         let id = matchadd('IncSearch', pat, 0, -1)
-        call timer_start(150, {-> exists('id') ? matchdelete(id) : ''})
+        call timer_start(250, {-> exists('id') ? matchdelete(id) : ''})
     catch
         return my_lib#catch_error()
     endtry
