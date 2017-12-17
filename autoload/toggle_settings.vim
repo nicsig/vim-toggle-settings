@@ -82,6 +82,14 @@
 " need to do that when you know it in advance.
 "}}}
 "}}}
+
+" Autocmds {{{1
+
+augroup hl_yanked_text
+    au!
+    au TextYankPost * if s:toggle_hl_yanked_text('is_active') | call s:hl_yanked_text() | endif
+augroup END
+
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
     if a:action ==# 'is_active'
@@ -195,6 +203,31 @@ fu! s:formatprg(scope) abort "{{{2
     echo '[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)
 endfu
 
+fu! s:hl_yanked_text() abort "{{{2
+    try
+        if v:event.operator != 'y'
+            return
+        endif
+
+        let text = v:event.regcontents
+        let type = v:event.regtype
+        if type ==# 'v'
+            let text = join(v:event.regcontents, "\n")
+            let pat = '\%'.line('.').'l\%'.virtcol('.').'v\_.\{'.strchars(text, 1).'}'
+        elseif type ==# 'V'
+            let pat = '\%'.line('.').'l\_.*\%'.(line('.')+len(text)-1).'l'
+        elseif type =~# "\<c-v>".'\d\+'
+            let width = matchstr(type, "\<c-v>".'\zs\d\+')
+            let [line, vcol] = [line('.'), virtcol('.')]
+            let pat = join(map(text, {i,v -> '\%'.(line+i).'l\%'.vcol.'v.\{'.width.'}'}), '\|')
+        endif
+
+        let id = matchadd('IncSearch', pat, 0, -1)
+        call timer_start(150, {-> exists('id') ? matchdelete(id) : ''})
+    catch
+        return my_lib#catch_error()
+    endtry
+endfu
 fu! s:lightness(more, ...) abort "{{{2
     if a:0
         let g:seoul256_light_background = g:seoul256_light_background == a:1 ? a:2 : a:1
@@ -393,6 +426,16 @@ fu! s:stl_list_position(fwd, ...) abort "{{{2
     \:                2 - (2 - g:my_stl_list_position + 1)%(2+1)
 
     let g:motion_to_repeat = (a:fwd ? ']' : '[').'oi'
+endfu
+
+fu! s:toggle_hl_yanked_text(action) abort "{{{2
+    if a:action ==# 'is_active'
+        return exists('s:hl_yanked_text')
+    elseif a:action ==# 'enable' && !exists('s:hl_yanked_text')
+        let s:hl_yanked_text = 1
+    elseif a:action ==# 'disable' && exists('s:hl_yanked_text')
+        unlet! s:hl_yanked_text
+    endif
 endfu
 
 fu! s:toggle_settings(...) abort "{{{2
@@ -632,6 +675,14 @@ call s:toggle_settings('virtualedit',
 \                      'ALL',
 \                      "\u2205",
 \                      '<sid>virtualedit("is_all")')
+
+call s:toggle_settings('hl yanked text',
+\                      'y',
+\                      'call <sid>toggle_hl_yanked_text("enable")',
+\                      'call <sid>toggle_hl_yanked_text("disable")',
+\                      'ON',
+\                      'OFF',
+\                      '<sid>toggle_hl_yanked_text("is_active")')
 
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
 call s:toggle_settings('auto open folds',
