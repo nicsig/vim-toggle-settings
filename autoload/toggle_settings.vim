@@ -228,6 +228,7 @@ fu! s:hl_yanked_text() abort "{{{2
         return my_lib#catch_error()
     endtry
 endfu
+
 fu! s:lightness(more, ...) abort "{{{2
     if a:0
         let g:seoul256_light_background = g:seoul256_light_background == a:1 ? a:2 : a:1
