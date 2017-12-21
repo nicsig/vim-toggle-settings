@@ -423,7 +423,9 @@ endfu
 
 fu! s:stl_list_position(fwd, ...) abort "{{{2
     if a:0
-        let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == a:1 ? a:2 : a:1
+        let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == 0
+        \?                               (empty(getqflist()) ? 2 : 1)
+        \:                               0
         return
     endif
 
@@ -535,7 +537,12 @@ call s:toggle_settings('conceallevel',
 
 call s:toggle_settings('stl_list_position',
 \                      'i',
-\                      '[0, 1]')
+\                      '[0, 0]')
+"                        ^  ^
+"                        doesn't matter, we don't use these values
+"                        TODO:
+"                        if we don't use them, something should be improved
+"                        in the design of `s:toggle_settings()`
 
 " Do NOT use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('lightness',
