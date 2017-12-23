@@ -345,64 +345,6 @@ fu! s:lightness(more, ...) abort "{{{2
         let level = g:seoul256_background - 233 + 1
     endif
 
-    " Why the timer?{{{
-    "
-    " When you  want to echo a  message from a  function, there are 3  parameters to
-    " consider.
-    "
-    "         1. Is 'lazyredraw' set or not?
-    "         2. Is the function called from an <expr> mapping?
-    "         3. Do you echo now, or later (timer, feedkeys())?
-    "
-    " There are 8  possibilities. Atm, some of them fail either  because the message
-    " is immediately  erased, or  because the  cursor is  stuck on  the command-line
-    " after  the message  (once out  of 2),  and the  change of  colorscheme is  not
-    " visible while the cursor is stuck.
-    " Reproduce:
-    "
-    "         nno <expr> cd Func()
-    "         fu! Func() abort
-    "             echo 'hello'
-    "             return ''
-    "         endfu
-    "
-    "  In  Vim, this  can be  solved  by calling  `redraw` from  a timer  inside
-    " `Func()`:
-    "
-    "             call timer_start(0, {-> execute('redraw')})
-    "
-    " … but it doesn't work in Neovim.
-    "
-    " The working possibilities are different for Vim and Neovim:
-    "
-    "         Vim:
-    "
-    "          ┌─ is 'lz' set?
-    "          │  ┌─ do you use <expr>?
-    "          │  │  ┌─ do you echo now?
-    "          │  │  │
-    "         [0, 0, 0]
-    "         [1, 0, 0]
-    "         [1, 1, 0]
-    "
-    "         Neovim:
-    "
-    "         [0, 0, 0]
-    "         [0, 0, 1]
-    "         [1, 0, 0]
-    "         [1, 0, 1]
-    "         [1, 1, 1]
-    "
-    " Solutions which work for Vim AND Neovim:    [0,0,0]
-    "                                             [1,0,0]
-    "
-    " Conclusions:
-    " In Vim do NOT echo now, and do NOT enable 'lz' with an <expr> mapping.
-    " In Neovim, do NOT use <expr>, unless you enable 'lz' and you echo now.
-    "
-    " To write a function which echo a message, and which will work in both,
-    " do NOT use <expr>, and do NOT echo now.
-"}}}
     call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
     let g:motion_to_repeat = (a:more ? ']' : '[').'oL'
     return ''
