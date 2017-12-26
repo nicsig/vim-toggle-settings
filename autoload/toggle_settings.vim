@@ -592,6 +592,14 @@ call s:toggle_settings('formatoptions',
 \                      '-c: auto-wrap comments OFF',
 \                      'index(split(&l:fo, "\\zs"), "c") >= 0')
 
+call s:toggle_settings('fugitive branch',
+\                      'g',
+\                      'let g:my_fugitive_branch = 1',
+\                      'let g:my_fugitive_branch = 0',
+\                      'ON',
+\                      'OFF',
+\                      'get(g:, "my_fugitive_branch", 0)')
+
 call s:toggle_settings('cursorline',
 \                      'l',
 \                      'call <sid>cursorline(1)',
