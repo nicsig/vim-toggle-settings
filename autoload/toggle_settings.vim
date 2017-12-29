@@ -175,6 +175,22 @@ fu! s:cursorline(enable) abort "{{{2
     endif
 endfu
 
+fu! s:edit_help_file(allow) "{{{2
+    if a:allow && !empty(maparg("q", "n", 0, 1))
+        for a_key in [ 'p', 'q' , 'u' ]
+            exe 'sil unmap <buffer> '.a_key
+        endfor
+        nno  <buffer><nowait><silent>  <cr>  80<bar>
+        setl modifiable noreadonly
+        echo 'you CAN edit the file'
+
+    elseif !a:allow && empty(maparg("q", "n", 0, 1))
+        runtime after/ftplugin/help.vim
+        setl nomodifiable readonly
+        echo 'you can NOT edit the file'
+    endif
+endfu
+
 fu! s:formatprg(scope) abort "{{{2
     if a:scope ==# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
         if !exists('s:local_fp_save')
@@ -521,6 +537,12 @@ call s:toggle_settings('verbose errors',
 \                      'call <sid>verbose_errors(1)',
 \                      'call <sid>verbose_errors(0)',
 \                      'get(g:, "my_verbose_errors", 0) == 1')
+
+call s:toggle_settings('edit Help file',
+\                      'H',
+\                      'call <sid>edit_help_file(1)',
+\                      'call <sid>edit_help_file(0)',
+\                      'empty(maparg("q", "n", 0, 1))')
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
