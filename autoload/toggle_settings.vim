@@ -461,6 +461,7 @@ endfu
 
 fu! s:verbose_errors(enable) abort "{{{2
     let g:my_verbose_errors = a:enable ? 1 : 0
+    let &debug = a:enable ? 'throw' : ''
     echo '[verbose errors] '.(g:my_verbose_errors ? 'ON' : 'OFF')
 endfu
 
