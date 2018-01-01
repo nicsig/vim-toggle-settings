@@ -373,7 +373,7 @@ fu! s:matchparen(enable) abort "{{{2
     endif
     let cur_win = winnr()
     if a:enable && !exists('g:loaded_matchparen') || !a:enable && exists('g:loaded_matchparen')
-        runtime plugin/my_matchparen.vim
+        runtime! plugin/my_matchparen.vim
     endif
     exe cur_win.'wincmd w'
     echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
