@@ -176,6 +176,9 @@ fu! s:cursorline(enable) abort "{{{2
 endfu
 
 fu! s:edit_help_file(allow) "{{{2
+    if &ft !=# 'help'
+        return
+    endif
     if a:allow && !empty(maparg("q", "n", 0, 1))
         for a_key in [ 'p', 'q' , 'u' ]
             exe 'sil unmap <buffer> '.a_key
