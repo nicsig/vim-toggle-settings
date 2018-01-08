@@ -153,7 +153,6 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
     endif
 
     let &l:cole = new_val
-    let g:motion_to_repeat = (a:is_fwd ? ']' : '[').'oc'
     echo '[conceallevel] '.&l:cole
 endfu
 
@@ -365,7 +364,6 @@ fu! s:lightness(more, ...) abort "{{{2
     endif
 
     call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
-    let g:motion_to_repeat = (a:more ? ']' : '[').'oL'
     return ''
 endfu
 
@@ -395,7 +393,8 @@ fu! s:stl_list_position(is_fwd, ...) abort "{{{2
     \?                (g:my_stl_list_position + 1)%(2+1)
     \:                2 - (2 - g:my_stl_list_position + 1)%(2+1)
 
-    let g:motion_to_repeat = (a:is_fwd ? ']' : '[').'oi'
+    " necessary to update the list position item immediately
+    redraws
 endfu
 
 fu! s:toggle_hl_yanked_text(action) abort "{{{2
@@ -431,9 +430,9 @@ fu! s:toggle_settings(...) abort "{{{2
 
     elseif a:0 == 3
         let [ a_func, letter, values ] = [ a:1, a:2, eval(a:3) ]
-        exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
-        exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
-        exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
+        exe 'nno  <silent>          [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
+        exe 'nno  <silent>          ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
+        exe 'nno  <silent>          co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
 
         return
 
@@ -688,3 +687,7 @@ call s:toggle_settings('auto open folds',
 "
 "                                   exists('s:my_var')       ✘
 "                                   exists('<sid>my_var')    ✘
+
+" make them repeatable {{{2
+
+runtime plugin/my_repeatable_motions2.vim
