@@ -128,14 +128,14 @@ fu! s:auto_open_fold(action) abort "{{{2
     endif
 endfu
 
-fu! s:conceallevel(fwd, ...) abort "{{{2
+fu! s:conceallevel(is_fwd, ...) abort "{{{2
     if a:0
         let &l:cole = &l:cole == a:1 ? a:2 : a:1
         echo '[conceallevel] '.&l:cole
         return
     endif
 
-    let new_val = a:fwd
+    let new_val = a:is_fwd
     \?                (&l:cole + 1)%(3+1)
     \:                3 - (3 - &l:cole + 1)%(3+1)
 
@@ -149,11 +149,11 @@ fu! s:conceallevel(fwd, ...) abort "{{{2
     "
     "     • nothing = 3
     if new_val == 1
-        let new_val = a:fwd ? 2 : 0
+        let new_val = a:is_fwd ? 2 : 0
     endif
 
     let &l:cole = new_val
-    let g:motion_to_repeat = (a:fwd ? ']' : '[').'oc'
+    let g:motion_to_repeat = (a:is_fwd ? ']' : '[').'oc'
     echo '[conceallevel] '.&l:cole
 endfu
 
@@ -382,7 +382,7 @@ fu! s:matchparen(enable) abort "{{{2
     echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
 endfu
 
-fu! s:stl_list_position(fwd, ...) abort "{{{2
+fu! s:stl_list_position(is_fwd, ...) abort "{{{2
     if a:0
         let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == 0
         \?                               (empty(getqflist()) ? 2 : 1)
@@ -391,11 +391,11 @@ fu! s:stl_list_position(fwd, ...) abort "{{{2
     endif
 
     let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0)
-    let g:my_stl_list_position = a:fwd
+    let g:my_stl_list_position = a:is_fwd
     \?                (g:my_stl_list_position + 1)%(2+1)
     \:                2 - (2 - g:my_stl_list_position + 1)%(2+1)
 
-    let g:motion_to_repeat = (a:fwd ? ']' : '[').'oi'
+    let g:motion_to_repeat = (a:is_fwd ? ']' : '[').'oi'
 endfu
 
 fu! s:toggle_hl_yanked_text(action) abort "{{{2
