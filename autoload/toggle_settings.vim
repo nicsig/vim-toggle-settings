@@ -430,9 +430,9 @@ fu! s:toggle_settings(...) abort "{{{2
 
     elseif a:0 == 3
         let [ a_func, letter, values ] = [ a:1, a:2, eval(a:3) ]
-        exe 'nno  <silent>          [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
-        exe 'nno  <silent>          ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
-        exe 'nno  <silent>          co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
+        exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
+        exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
+        exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
 
         return
 
