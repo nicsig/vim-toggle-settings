@@ -690,4 +690,4 @@ call s:toggle_settings('auto open folds',
 
 " make them repeatable {{{2
 
-runtime plugin/my_repeatable_motions2.vim
+runtime plugin/my_repeatable_motions.vim
