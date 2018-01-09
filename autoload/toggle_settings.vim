@@ -688,6 +688,3 @@ call s:toggle_settings('auto open folds',
 "                                   exists('s:my_var')       ✘
 "                                   exists('<sid>my_var')    ✘
 
-" make them repeatable {{{2
-
-runtime plugin/my_repeatable_motions.vim
