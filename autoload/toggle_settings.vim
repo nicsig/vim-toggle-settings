@@ -183,7 +183,7 @@ fu! s:edit_help_file(allow) "{{{2
     if &ft !=# 'help'
         return
     endif
-    if a:allow && !empty(maparg("q", "n", 0, 1))
+    if a:allow && !empty(maparg('q', 'n', 0, 1))
         for a_key in [ 'p', 'q' , 'u' ]
             exe 'sil unmap <buffer> '.a_key
         endfor
@@ -191,7 +191,7 @@ fu! s:edit_help_file(allow) "{{{2
         setl modifiable noreadonly
         echo 'you CAN edit the file'
 
-    elseif !a:allow && empty(maparg("q", "n", 0, 1))
+    elseif !a:allow && empty(maparg('q', 'n', 0, 1))
         runtime! after/ftplugin/help.vim
         setl nomodifiable readonly
         echo 'you can NOT edit the file'
