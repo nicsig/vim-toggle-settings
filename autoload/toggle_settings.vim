@@ -184,7 +184,7 @@ fu! s:edit_help_file(allow) "{{{2
         return
     endif
     if a:allow && !empty(maparg('q', 'n', 0, 1))
-        for a_key in [ 'p', 'q' , 'u' ]
+        for a_key in [ 'p', 'q' , 'u', '<cr>' ]
             exe 'sil unmap <buffer> '.a_key
         endfor
         nno  <buffer><nowait><silent>  <cr>  80<bar>
