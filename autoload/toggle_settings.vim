@@ -248,7 +248,7 @@ fu! s:hl_yanked_text() abort "{{{2
         elseif type =~# "\<c-v>".'\d\+'
             let width = matchstr(type, "\<c-v>".'\zs\d\+')
             let [line, vcol] = [line('.'), virtcol('.')]
-            let pat = join(map(text, {i,v -> '\%'.(line+i).'l\%'.vcol.'v.\{'.width.'}'}), '\|')
+            let pat = join(map(text, {i -> '\%'.(line+i).'l\%'.vcol.'v.\{'.width.'}'}), '\|')
         endif
 
         let id = matchadd('IncSearch', pat, 0, -1)
