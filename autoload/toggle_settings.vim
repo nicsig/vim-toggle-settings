@@ -184,10 +184,17 @@ fu! s:edit_help_file(allow) "{{{2
         return
     endif
     if a:allow && !empty(maparg('q', 'n', 0, 1))
-        for a_key in [ 'p', 'q' , 'u', '<cr>' ]
+        nno  <buffer><nowait><silent>  <cr>  80<bar>
+
+        let keys = ['p', 'q' , 'u']
+        for a_key in keys
             exe 'sil unmap <buffer> '.a_key
         endfor
-        nno  <buffer><nowait><silent>  <cr>  80<bar>
+
+        for pat in map(keys, {i,v ->  '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'.v."'"})
+            let b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
+        endfor
+
         setl modifiable noreadonly
         echo 'you CAN edit the file'
 
