@@ -199,7 +199,8 @@ fu! s:edit_help_file(allow) "{{{2
         echo 'you CAN edit the file'
 
     elseif !a:allow && empty(maparg('q', 'n', 0, 1))
-        runtime! after/ftplugin/help.vim
+        " reload ftplugin
+        edit
         setl nomodifiable readonly
         echo 'you can NOT edit the file'
     endif
