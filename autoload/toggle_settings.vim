@@ -174,7 +174,7 @@ fu! s:change_cursor_color(color) abort "{{{2
         " Why?{{{
         "
         " Inside tmux, the keysequence will be consumed by the latter,
-        " instead of being sent to the shell. To avoid that, we must:
+        " instead of being sent to the terminal. To avoid that, we must:
         "
         "     • prefix it with    Esc Ptmux;
         "     • suffix it with    Esc \
