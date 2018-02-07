@@ -133,6 +133,90 @@ fu! s:auto_open_fold(action) abort "{{{2
     endif
 endfu
 
+fu! s:change_cursor_color(color) abort "{{{2
+    " Why?{{{
+    "
+    " We're going to execute a `$ printf` command, via `:!`.
+    "
+    " It may contain a `#` character (prefix in hex code).
+    " On Vim's command line, this character is automatically expanded
+    " in the name of the alternate file.
+    "
+    " We don't want that.
+    "}}}
+    let color = escape(a:color, '#')
+
+    " The general syntax to set an xterm parameter is:{{{
+    "
+    "         ESC ] Ps;Pt ST
+    "               └┤ └┤ └┤
+    "                │  │  └ \007; \0 = octal base (what's the meaning of ST?)
+    "                │  │
+    "                │  └ a text parameter composed of printable characters
+    "                │
+    "                └ a single (usually optional) numeric parameter,
+    "                  composed of one or more digits
+    "
+    " http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#Definitions
+    " http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#XTerm_Operating_System_Commands
+    "
+    " Here, we want to set the color of the cursor to #373b41.
+    " The latter must take the place  of the `Pt` parameter (the color could
+    " be a  name instead of a  hex number, so  it fits the description  of a
+    " TEXT parameter):
+    "
+    "         → Ps = 12
+    "           Change colour of text cursor foreground to Pt
+    "}}}
+    let seq = '\033]12;'.color.'\007'
+
+    if exists('$TMUX')
+        " Why?{{{
+        "
+        " Inside tmux, the keysequence could be consumed by the latter.
+        " To avoid that, we must:
+        "
+        "     • prefix it with    Esc Ptmux;
+        "     • suffix it with    Esc \
+        "     • double any Escape it contains
+        "
+        " See `vim-cursor` for more info (look for the keyword "underlying").
+        "}}}
+        let seq = substitute(seq, '\\033', '\\033\\033', 'g')
+        exe printf('sil !printf ''%s%s%s''',
+        \          '\033Ptmux;',
+        \          seq,
+        \          '\033\\')
+    else
+        exe 'sil !printf '.string(seq)
+    endif
+endfu
+
+fu! s:colorscheme(is_light) abort "{{{2
+    if a:is_light
+        colo seoul256-light
+        call s:cursorline(0)
+        call s:change_cursor_color('#373b41')
+    else
+        " Why unletting `g:seoul256_background`?{{{
+        "
+        " In  our vimrc  we  manually set  `g:seoul256_background`  to choose  a
+        " custom lightness.  When we change the colorscheme, from light to dark,
+        " `g:seoul256_background` has a  value which will be  interpreted as the
+        " desire to set a light colorscheme:
+        "
+        "         ~/.vim/plugged/seoul256.vim/colors/seoul256.vim
+        "
+        " This is not  what we want. We want  a dark one. So, we  must make sure
+        " the variable is deleted before trying to load the dark colorscheme.
+        "}}}
+        unlet! g:seoul256_background
+        colo seoul256
+        call s:cursorline(1)
+        call s:change_cursor_color('#9a7372')
+    endif
+endfu
+
 fu! s:conceallevel(is_fwd, ...) abort "{{{2
     if a:0
         let &l:cole = &l:cole == a:1 ? a:2 : a:1
@@ -361,6 +445,7 @@ fu! s:lightness(more, ...) abort "{{{2
         colo seoul256-light
         " get info to display in a message
         let level = g:seoul256_light_background - 252 + 1
+
     else
         " We need to make `g:seoul256_background` cycle through [ 233, 239 ].
 
@@ -527,22 +612,10 @@ call s:toggle_settings('lightness',
 
 " 5 {{{2
 
-" Why unletting `g:seoul256_background`?{{{
-"
-" In   our  vimrc   we  manually   set  `g:seoul256_background`   to  choose   a
-" custom  lightness.   When we  change  the  colorscheme,  from light  to  dark,
-" `g:seoul256_background` has a value which will be interpreted as the desire to
-" set a light colorscheme:
-"
-"         ~/.vim/plugged/seoul256.vim/colors/seoul256.vim
-"
-" This  is not  what we  want. We want  a dark  one. So, we  must make  sure the
-" variable is deleted before trying to load the dark colorscheme.
-"}}}
 call s:toggle_settings('colorscheme',
 \                      'C',
-\                      'colo seoul256-light<bar>call <sid>cursorline(0)',
-\                      'unlet! g:seoul256_background <bar> colo seoul256 <bar> call <sid>cursorline(1)',
+\                      'call <sid>colorscheme(1)',
+\                      'call <sid>colorscheme(0)',
 \                      'get(g:, "colors_name", "") =~? "light"')
 
 " Mnemonics:
