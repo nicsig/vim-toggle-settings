@@ -173,8 +173,8 @@ fu! s:change_cursor_color(color) abort "{{{2
     if exists('$TMUX')
         " Why?{{{
         "
-        " Inside tmux, the keysequence could be consumed by the latter.
-        " To avoid that, we must:
+        " Inside tmux, the keysequence will be consumed by the latter,
+        " instead of being sent to the shell. To avoid that, we must:
         "
         "     • prefix it with    Esc Ptmux;
         "     • suffix it with    Esc \
@@ -212,6 +212,9 @@ fu! s:colorscheme(is_light) abort "{{{2
         "}}}
         unlet! g:seoul256_background
         colo seoul256
+        " We  enable 'cul'  in  a  dark colorscheme,  but  it  can be  extremely
+        " cpu-consuming when  you move  horizontally (j,  k, w,  b, e,  …) and
+        " 'showcmd' is enabled.
         call s:cursorline(1)
         call s:change_cursor_color('#9a7372')
     endif
