@@ -621,7 +621,7 @@ call s:toggle_settings('colorscheme',
 \                      'call <sid>colorscheme(0)',
 \                      'get(g:, "colors_name", "") =~? "light"')
 
-" Mnemonics:
+" Mnemonic:
 " D for Debug
 call s:toggle_settings('verbose errors',
 \                      'D',
