@@ -222,7 +222,7 @@ endfu
 
 fu! s:conceallevel(is_fwd, ...) abort "{{{2
     if a:0
-        let &l:cole = &l:cole == a:1 ? a:2 : a:1
+        let &l:cole = &l:cole ==# a:1 ? a:2 : a:1
         echo '[conceallevel] '.&l:cole
         return
     endif
@@ -240,7 +240,7 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
     "       has a replacement character: `cchar`, {'conceal': 'x'}
     "
     "     • nothing = 3
-    if new_val == 1
+    if new_val ==# 1
         let new_val = a:is_fwd ? 2 : 0
     endif
 
@@ -355,7 +355,7 @@ endfu
 
 fu! s:lightness(more, ...) abort "{{{2
     if a:0
-        let g:seoul256_light_background = g:seoul256_light_background == a:1 ? a:2 : a:1
+        let g:seoul256_light_background = g:seoul256_light_background ==# a:1 ? a:2 : a:1
         colo seoul256-light
         let level = g:seoul256_light_background - 252 + 1
         call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
@@ -483,7 +483,7 @@ endfu
 
 fu! s:stl_list_position(is_fwd, ...) abort "{{{2
     if a:0
-        let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == 0
+        let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) ==# 0
         \?                               (empty(getqflist()) ? 2 : 1)
         \:                               0
         return
@@ -509,12 +509,12 @@ fu! s:toggle_hl_yanked_text(action) abort "{{{2
 endfu
 
 fu! s:toggle_settings(...) abort "{{{2
-    if a:0 == 7
+    if a:0 ==# 7
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
         let msg1 = '['.label.'] '.msg1
         let msg2 = '['.label.'] '.msg2
 
-    elseif a:0 == 5
+    elseif a:0 ==# 5
         let [ label, letter, cmd1, cmd2, test ] = a:000
 
         let rhs3 =  '     if '.test
@@ -529,7 +529,7 @@ fu! s:toggle_settings(...) abort "{{{2
 
         return
 
-    elseif a:0 == 3
+    elseif a:0 ==# 3
         let [ a_func, letter, values ] = [ a:1, a:2, eval(a:3) ]
         exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
         exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
@@ -537,7 +537,7 @@ fu! s:toggle_settings(...) abort "{{{2
 
         return
 
-    elseif a:0 == 2
+    elseif a:0 ==# 2
         let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = [
         \                                                       a:1,
         \                                                       a:2,
@@ -627,7 +627,7 @@ call s:toggle_settings('verbose errors',
 \                      'D',
 \                      'call <sid>verbose_errors(1)',
 \                      'call <sid>verbose_errors(0)',
-\                      'get(g:, "my_verbose_errors", 0) == 1')
+\                      'get(g:, "my_verbose_errors", 0) ==# 1')
 
 call s:toggle_settings('edit Help file',
 \                      'H',
