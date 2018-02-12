@@ -97,9 +97,9 @@ augroup END
 
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
-    if a:action ==# 'is_active'
+    if a:action is# 'is_active'
         return exists('s:fold_options_save')
-    elseif a:action ==# 'enable' && !exists('s:fold_options_save')
+    elseif a:action is# 'enable' && !exists('s:fold_options_save')
         let s:fold_options_save = {
         \                           'close'  : &foldclose,
         \                           'open'   : &foldopen,
@@ -124,7 +124,7 @@ fu! s:auto_open_fold(action) abort "{{{2
         set foldopen=all  " open  a fold if we enter it with any command
         set foldenable
         set foldlevel=0   " close all folds by default
-    elseif a:action ==# 'disable' && exists('s:fold_options_save')
+    elseif a:action is# 'disable' && exists('s:fold_options_save')
         for op in keys(s:fold_options_save)
             exe 'let &fold'.op.' = s:fold_options_save.'.op
         endfor
@@ -294,7 +294,7 @@ fu! s:edit_help_file(allow) "{{{2
 endfu
 
 fu! s:formatprg(scope) abort "{{{2
-    if a:scope ==# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
+    if a:scope is# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
         if !exists('s:local_fp_save')
             let s:local_fp_save = {}
         endif
@@ -302,7 +302,7 @@ fu! s:formatprg(scope) abort "{{{2
         " we use our mappings to toggle the latter
         let s:local_fp_save[bufnr('%')] = &l:fp
         setl fp<
-    elseif a:scope ==# 'local' && exists('s:local_fp_save') && has_key(s:local_fp_save, bufnr('%'))
+    elseif a:scope is# 'local' && exists('s:local_fp_save') && has_key(s:local_fp_save, bufnr('%'))
         " `js-beautify` is a formatting tool for js, html, css.
         "
         " Installation:
@@ -329,16 +329,16 @@ fu! s:hl_yanked_text() abort "{{{2
         "                        │                          │ the visual selection in `*` after we leave
         "                        │                          │ visual mode
         "  ┌─────────────────────┤    ┌─────────────────────┤
-        if v:event.operator != 'y' || v:event.regname ==# '*'
+        if v:event.operator != 'y' || v:event.regname is# '*'
             return
         endif
 
         let text = v:event.regcontents
         let type = v:event.regtype
-        if type ==# 'v'
+        if type is# 'v'
             let text = join(v:event.regcontents, "\n")
             let pat = '\%'.line('.').'l\%'.virtcol('.').'v\_.\{'.strchars(text, 1).'}'
-        elseif type ==# 'V'
+        elseif type is# 'V'
             let pat = '\%'.line('.').'l\_.*\%'.(line('.')+len(text)-1).'l'
         elseif type =~# "\<c-v>".'\d\+'
             let width = matchstr(type, "\<c-v>".'\zs\d\+')
@@ -499,11 +499,11 @@ fu! s:stl_list_position(is_fwd, ...) abort "{{{2
 endfu
 
 fu! s:toggle_hl_yanked_text(action) abort "{{{2
-    if a:action ==# 'is_active'
+    if a:action is# 'is_active'
         return exists('s:hl_yanked_text')
-    elseif a:action ==# 'enable' && !exists('s:hl_yanked_text')
+    elseif a:action is# 'enable' && !exists('s:hl_yanked_text')
         let s:hl_yanked_text = 1
-    elseif a:action ==# 'disable' && exists('s:hl_yanked_text')
+    elseif a:action is# 'disable' && exists('s:hl_yanked_text')
         unlet! s:hl_yanked_text
     endif
 endfu
@@ -568,12 +568,12 @@ fu! s:verbose_errors(enable) abort "{{{2
 endfu
 
 fu! s:virtualedit(action) abort "{{{2
-    if a:action ==# 'is_all'
+    if a:action is# 'is_all'
         return exists('s:ve_save')
-    elseif a:action ==# 'enable' && !exists('s:ve_save')
+    elseif a:action is# 'enable' && !exists('s:ve_save')
         let s:ve_save = &ve
         set ve=all
-    elseif a:action ==# 'disable' && exists('s:ve_save')
+    elseif a:action is# 'disable' && exists('s:ve_save')
         let &ve = get(s:, 've_save', 'block')
         unlet! s:ve_save
     endif
@@ -677,7 +677,7 @@ call s:toggle_settings('formatprg',
 \                      'q',
 \                      'call <sid>formatprg("global")',
 \                      'call <sid>formatprg("local")',
-\                      '&g:fp ==# &l:fp')
+\                      '&g:fp is# &l:fp')
 
 " 7 {{{2
 
@@ -735,7 +735,7 @@ call s:toggle_settings('spelllang',
 \                      'setl spl=en',
 \                      'FR',
 \                      'EN',
-\                      '&l:spl ==# "fr"')
+\                      '&l:spl is# "fr"')
 
 call s:toggle_settings('fold title',
 \                      't',
