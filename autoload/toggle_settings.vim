@@ -267,7 +267,7 @@ fu! s:cursorline(enable) abort "{{{2
 endfu
 
 fu! s:edit_help_file(allow) "{{{2
-    if &ft !=# 'help'
+    if &ft isnot# 'help'
         return
     endif
     if a:allow && !empty(maparg('q', 'n', 0, 1))
@@ -323,13 +323,13 @@ endfu
 
 fu! s:hl_yanked_text() abort "{{{2
     try
-        "                        ┌ don't highlight anything if we didn't copy anything
-        "                        │
-        "                        │                          ┌ don't highlight anything if Vim has copied
-        "                        │                          │ the visual selection in `*` after we leave
-        "                        │                          │ visual mode
-        "  ┌─────────────────────┤    ┌─────────────────────┤
-        if v:event.operator != 'y' || v:event.regname is# '*'
+        "                            ┌ don't highlight anything if we didn't copy anything
+        "                            │
+        "                            │                          ┌ don't highlight anything if Vim has copied
+        "                            │                          │ the visual selection in `*` after we leave
+        "                            │                          │ visual mode
+        "  ┌─────────────────────────┤    ┌─────────────────────┤
+        if v:event.operator isnot# 'y' || v:event.regname is# '*'
             return
         endif
 
