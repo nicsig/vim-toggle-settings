@@ -32,7 +32,6 @@ let g:autoloaded_toggle_settings = 1
 " In this case, use `<f-args>`.
 "}}}
 
-" WARNING{{{
 " Don't forget to properly handle repeated (dis)activations. {{{
 " Necessary when you save/restore a state with a custom variable.
 "
@@ -85,7 +84,6 @@ let g:autoloaded_toggle_settings = 1
 " one.  The current issue concerns the  latter, because when you transit from an
 " unknown state, you have to save it first for the future restoration. You don't
 " need to do that when you know it in advance.
-"}}}
 "}}}
 
 " Autocmds {{{1
