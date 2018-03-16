@@ -280,13 +280,13 @@ fu! s:edit_help_file(allow) "{{{2
             let b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
         endfor
 
-        setl modifiable noreadonly
+        setl modifiable noreadonly bt=
         echo 'you CAN edit the file'
 
     elseif !a:allow && empty(maparg('q', 'n', 0, 1))
         " reload ftplugin
         edit
-        setl nomodifiable readonly
+        setl nomodifiable readonly bt=help
         echo 'you can NOT edit the file'
     endif
 endfu
