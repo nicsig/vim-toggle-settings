@@ -584,6 +584,7 @@ endfu
 call s:toggle_settings('cursorcolumn'  , 'o')
 call s:toggle_settings('hlsearch'      , 'h')
 call s:toggle_settings('list'          , 'I')
+call s:toggle_settings('previewwindow' , 'P')
 call s:toggle_settings('showcmd'       , 'W')
 call s:toggle_settings('spell'         , 's')
 call s:toggle_settings('wrap'          , 'w')
