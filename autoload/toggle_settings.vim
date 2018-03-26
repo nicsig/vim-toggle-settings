@@ -226,8 +226,8 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
     endif
 
     let new_val = a:is_fwd
-    \?                (&l:cole + 1)%(3+1)
-    \:                3 - (3 - &l:cole + 1)%(3+1)
+              \ ?     (&l:cole + 1)%(3+1)
+              \ :     3 - (3 - &l:cole + 1)%(3+1)
 
     " We are not interested in level 1.
     " The 3 other levels are enough. If I want to see:
@@ -439,8 +439,8 @@ fu! s:lightness(more, ...) abort "{{{2
 
         " update `g:seoul256_light_background`
         let g:seoul256_light_background = a:more
-        \?        (g:seoul256_light_background - 252 + 1)%(4+1) + 252
-        \:        256 - (256 - g:seoul256_light_background +1)%(4+1)
+        \ ?       (g:seoul256_light_background - 252 + 1)%(4+1) + 252
+        \ :       256 - (256 - g:seoul256_light_background +1)%(4+1)
 
         " update colorscheme
         colo seoul256-light
@@ -455,8 +455,8 @@ fu! s:lightness(more, ...) abort "{{{2
         let g:seoul256_background = get(g:, 'seoul256_background', 237)
 
         let g:seoul256_background = a:more
-        \?        (g:seoul256_background - 233 + 1)%(6+1) + 233
-        \:        239 - (239 - g:seoul256_background +1)%(6+1)
+        \ ?       (g:seoul256_background - 233 + 1)%(6+1) + 233
+        \ :       239 - (239 - g:seoul256_background +1)%(6+1)
 
         colo seoul256
         let level = g:seoul256_background - 233 + 1
@@ -482,15 +482,15 @@ endfu
 fu! s:stl_list_position(is_fwd, ...) abort "{{{2
     if a:0
         let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) ==# 0
-        \?                               (empty(getqflist()) ? 2 : 1)
-        \:                               0
+                                 \ ?     (empty(getqflist()) ? 2 : 1)
+                                 \ :     0
         return
     endif
 
     let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0)
     let g:my_stl_list_position = a:is_fwd
-    \?                (g:my_stl_list_position + 1)%(2+1)
-    \:                2 - (2 - g:my_stl_list_position + 1)%(2+1)
+    \ ?               (g:my_stl_list_position + 1)%(2+1)
+    \ :               2 - (2 - g:my_stl_list_position + 1)%(2+1)
 
     " necessary to update the list position item immediately
     redraws
