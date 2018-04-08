@@ -738,11 +738,11 @@ call s:toggle_settings('spelllang',
 
 call s:toggle_settings('fold title',
 \                      't',
-\                      'let b:my_title_full=1 <bar> redraw!',
-\                      'let b:my_title_full=0 <bar> redraw!',
+\                      'let b:foldtitle_full=1 <bar> redraw!',
+\                      'let b:foldtitle_full=0 <bar> redraw!',
 \                      'full',
 \                      'short',
-\                      'get(b:, "my_title_full", 0)')
+\                      'get(b:, "foldtitle_full", 0)')
 
 call s:toggle_settings('virtualedit',
 \                      'v',
