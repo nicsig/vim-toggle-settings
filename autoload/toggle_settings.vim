@@ -606,7 +606,7 @@ call s:toggle_settings('stl_list_position',
 
 " Do NOT use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('lightness',
-\                      'L',
+\                      'l',
 \                      '[253, 256]' )
 " TODO:
 "
@@ -713,7 +713,7 @@ call s:toggle_settings('fugitive branch',
 \                      'get(g:, "my_fugitive_branch", 0)')
 
 call s:toggle_settings('cursorline',
-\                      'l',
+\                      'L',
 \                      'call <sid>cursorline(1)',
 \                      'call <sid>cursorline(0)',
 \                      'ON',
