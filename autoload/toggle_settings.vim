@@ -741,7 +741,7 @@ call s:toggle_settings('virtualedit',
 \                      'call <sid>virtualedit("enable")',
 \                      'call <sid>virtualedit("disable")',
 \                      'ALL',
-\                      "\u2205",
+\                      '∅',
 \                      '<sid>virtualedit("is_all")')
 
 call s:toggle_settings('hl yanked text',
