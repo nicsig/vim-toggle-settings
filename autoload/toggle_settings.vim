@@ -220,7 +220,18 @@ endfu
 
 fu! s:conceallevel(is_fwd, ...) abort "{{{2
     if a:0
-        let &l:cole = &l:cole ==# a:1 ? a:2 : a:1
+        " Why toggling between `0` and `2`, instead of `0` and `3` like everywhere else?{{{
+        "
+        " In a markdown file, we want to see `cchar`.
+        " It's useful to see a marker denoting a concealed answer to a question,
+        " for example. It could also be useful to pretty-print some logical/math
+        " symbols.
+        "}}}
+        if &ft is# 'markdown'
+            let &l:cole = &l:cole ==# 2 ? 0 : 2
+        else
+            let &l:cole = &l:cole ==# a:1 ? a:2 : a:1
+        endif
         echo '[conceallevel] '.&l:cole
         return
     endif
