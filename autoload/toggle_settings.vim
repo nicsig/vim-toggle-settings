@@ -168,26 +168,7 @@ fu! s:change_cursor_color(color) abort "{{{2
     "}}}
     let seq = '\033]12;'.color.'\007'
 
-    if exists('$TMUX')
-        " Why?{{{
-        "
-        " Inside tmux, the keysequence will be consumed by the latter,
-        " instead of being sent to the terminal. To avoid that, we must:
-        "
-        "     • prefix it with    Esc Ptmux;
-        "     • suffix it with    Esc \
-        "     • double any Escape it contains
-        "
-        " See `vim-cursor` for more info (look for the keyword "underlying").
-        "}}}
-        let seq = substitute(seq, '\\033', '\\033\\033', 'g')
-        exe printf('sil !printf ''%s%s%s''',
-        \          '\033Ptmux;',
-        \          seq,
-        \          '\033\\')
-    else
-        exe 'sil !printf '.string(seq)
-    endif
+    exe 'sil !printf '.string(seq)
 endfu
 
 fu! s:colorscheme(is_light) abort "{{{2
