@@ -688,14 +688,6 @@ call s:toggle_settings('diff',
 \                      'OFF',
 \                      '&l:diff')
 
-call s:toggle_settings('formatoptions',
-\                      'f',
-\                      'setl fo+=c',
-\                      'setl fo-=c',
-\                      '+c: auto-wrap comments ON',
-\                      '-c: auto-wrap comments OFF',
-\                      'index(split(&l:fo, "\\zs"), "c") >= 0')
-
 call s:toggle_settings('fugitive branch',
 \                      'g',
 \                      'let g:my_fugitive_branch = 1',
