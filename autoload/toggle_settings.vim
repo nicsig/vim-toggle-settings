@@ -168,6 +168,8 @@ fu! s:change_cursor_color(color) abort "{{{2
     "}}}
     let seq = '\033]12;'.color.'\007'
 
+    " FIXME:
+    " Doesn't work in Neovim.
     exe 'sil !printf '.string(seq)
 endfu
 
