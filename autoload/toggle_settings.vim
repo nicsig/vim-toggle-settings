@@ -357,7 +357,7 @@ fu! s:lightness(more, ...) abort "{{{2
     let is_light = g:seoul256_current_bg >= 252 && g:seoul256_current_bg <= 256
 
     if is_light
-        " We need to make `g:seoul256_light_background` cycle through [ 252, 256 ].
+        " We need to make `g:seoul256_light_background` cycle through [252, 256].
 
         " How to make a number `n` cycle through [a, a+1, …, a+p] ?{{{
         "                                                 ^
@@ -442,7 +442,7 @@ fu! s:lightness(more, ...) abort "{{{2
         let level = g:seoul256_light_background - 252 + 1
 
     else
-        " We need to make `g:seoul256_background` cycle through [ 233, 239 ].
+        " We need to make `g:seoul256_background` cycle through [233, 239].
 
         "   ┌ value to be used the NEXT time we execute `:colo seoul256`
         "   │
@@ -502,18 +502,18 @@ endfu
 
 fu! s:toggle_settings(...) abort "{{{2
     if a:0 ==# 7
-        let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = a:000
+        let [label, letter, cmd1, cmd2, msg1, msg2, test] = a:000
         let msg1 = '['.label.'] '.msg1
         let msg2 = '['.label.'] '.msg2
 
     elseif a:0 ==# 5
-        let [ label, letter, cmd1, cmd2, test ] = a:000
+        let [label, letter, cmd1, cmd2, test] = a:000
 
-        let rhs3 =  '     if '.test
-        \          .'<bar>    exe '.string(cmd2)
-        \          .'<bar>else'
-        \          .'<bar>    exe '.string(cmd1)
-        \          .'<bar>endif'
+        let rhs3 = '     if '.test
+            \ .'<bar>    exe '.string(cmd2)
+            \ .'<bar>else'
+            \ .'<bar>    exe '.string(cmd1)
+            \ .'<bar>endif'
 
         exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>'.cmd1.'<cr>'
         exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>'.cmd2.'<cr>'
@@ -522,7 +522,7 @@ fu! s:toggle_settings(...) abort "{{{2
         return
 
     elseif a:0 ==# 3
-        let [ a_func, letter, values ] = [ a:1, a:2, eval(a:3) ]
+        let [a_func, letter, values] = [a:1, a:2, eval(a:3)]
         exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
         exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
         exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
@@ -530,15 +530,15 @@ fu! s:toggle_settings(...) abort "{{{2
         return
 
     elseif a:0 ==# 2
-        let [ label, letter, cmd1, cmd2, msg1, msg2, test ] = [
-        \                                                       a:1,
-        \                                                       a:2,
-        \                                                       'setl '.a:1,
-        \                                                       'setl no'.a:1,
-        \                                                       '['.a:1.'] ON',
-        \                                                       '['.a:1.'] OFF',
-        \                                                       '&l:'.a:1,
-        \                                                     ]
+        let [label, letter, cmd1, cmd2, msg1, msg2, test] = [
+            \ a:1,
+            \ a:2,
+            \ 'setl '.a:1,
+            \ 'setl no'.a:1,
+            \ '['.a:1.'] ON',
+            \ '['.a:1.'] OFF',
+            \ '&l:'.a:1,
+            \ ]
     else
         return
     endif
