@@ -3,35 +3,6 @@ if exists('g:autoloaded_toggle_settings')
 endif
 let g:autoloaded_toggle_settings = 1
 
-" How to pass arguments to a custom command?{{{
-"
-" When you  must pass  strings as  arguments to  a function  called by  a custom
-" command, you must ask yourself 3 questions:
-"
-"         • do I quote the arguments?
-"         • do I separate them with commas?
-"         • do I use the escape sequence `<f-args>` or `<args>`?
-"
-" Here's what you get, depending on your answers:
-"
-"         • quote     +     `<f-args>`                 ✘ too much quotes (2x)
-"         • no quote  +  no `<f-args>`                 ✘ E121            (undefined variable)
-"         • quote     +  no comma       +  `<args>`    ✘ E116            (arguments not separated by commas)
-"}}}
-" Conclusions:{{{
-"
-"         • you must use commas, unless you use `<f-args>`
-"         • you must quote the arguments passed to the command, or use `<f-args>`
-"         • but not both
-"
-" Prefer to manually quote the arguments, instead of using `<f-args>`.
-" Why?
-" It allows you to pass non strings data, like dictionaries.
-"
-" Except, of course, if all your arguments need to be quoted.
-" In this case, use `<f-args>`.
-"}}}
-
 " Don't forget to properly handle repeated (dis)activations. {{{
 " Necessary when you save/restore a state with a custom variable.
 "
