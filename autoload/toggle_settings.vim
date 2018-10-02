@@ -432,13 +432,13 @@ fu! s:lightness(more, ...) abort "{{{2
 endfu
 
 fu! s:matchparen(enable) abort "{{{2
-    if empty(globpath(&rtp, 'plugin/my_matchparen.vim', 0, 1, 1))
+    if empty(globpath(&rtp, 'plugin/matchparen_toggle.vim', 0, 1, 1))
         echo printf('no  %s  file was found in the runtimepath', 'plugin/matchparen.vim')
         return
     endif
     let cur_win = winnr()
     if a:enable && !exists('g:loaded_matchparen') || !a:enable && exists('g:loaded_matchparen')
-        runtime! plugin/my_matchparen.vim
+        runtime! plugin/matchparen_toggle.vim
     endif
     exe cur_win.'wincmd w'
     echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
