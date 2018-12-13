@@ -108,7 +108,7 @@ fu! s:change_cursor_color(color) abort "{{{2
     " We're going to execute a `$ printf` command, via `:!`.
     "
     " It may contain a `#` character (prefix in hex code).
-    " On Vim's command line, this character is automatically expanded
+    " On Vim's command-line, this character is automatically expanded
     " in the name of the alternate file.
     "
     " We don't want that.
