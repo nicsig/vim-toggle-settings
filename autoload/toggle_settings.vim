@@ -139,8 +139,14 @@ fu! s:change_cursor_color(color) abort "{{{2
     "}}}
     let seq = '\033]12;'.color.'\007'
 
-    " FIXME:
-    " Doesn't work in Neovim.
+    " FIXME: Doesn't work in Neovim.
+
+    " TODO: How to use `system()` instead of `:!`?
+    " We wouldn't need to escape `#`...
+
+    " FIXME: After changing the colorscheme, the cursor quickly blinks at random moments.
+    " It's subtle but distracting.
+    " I think it's because of this sequence...
     exe 'sil !printf '.string(seq)
 endfu
 
