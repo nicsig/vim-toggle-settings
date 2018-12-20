@@ -25,27 +25,27 @@ let g:autoloaded_toggle_settings = 1
 "
 " NEVER write this:
 "
-"            ┌─ boolean argument:
+"            ┌ boolean argument:
 "            │
 "            │      • when it's 1 it means we want to enable  some state
 "            │      • "         0                     disable "
 "            │
 "         if a:enable                       ✘
-"             let s:save = …
+"             let s:save = ...
 "                 │
-"                 └─ save current state for future restoration
-"             …
+"                 └ save current state for future restoration
+"             ...
 "         else                              ✘
-"             …
+"             ...
 "         endif
 "
 " Instead:
 "
 "         if a:enable && is_disabled        ✔
-"             let s:save = …
-"             …
+"             let s:save = ...
+"             ...
 "         elseif a:disable && is_enabled    ✔
-"             …
+"             ...
 "         endif
 "}}}
 " Which functions are concerned?{{{
@@ -158,20 +158,25 @@ fu! s:colorscheme(is_light) abort "{{{2
     else
         " Why unletting `g:seoul256_background`?{{{
         "
-        " In  our vimrc  we  manually set  `g:seoul256_background`  to choose  a
-        " custom lightness.  When we change the colorscheme, from light to dark,
-        " `g:seoul256_background` has a  value which will be  interpreted as the
+        " When Vim starts, we call `colorscheme#set()` from our vimrc.
+        " This function is defined in `~/.vim/autoload/colorscheme.vim`.
+        " It manually set `g:seoul256_background` to choose a custom lightness.
+        "
+        " When   we    change   the    colorscheme,   from   light    to   dark,
+        " `g:seoul256_background` has a value which will be interpreted as the
         " desire to set a light colorscheme:
         "
         "         ~/.vim/plugged/seoul256.vim/colors/seoul256.vim
         "
-        " This is not  what we want. We want  a dark one. So, we  must make sure
-        " the variable is deleted before trying to load the dark colorscheme.
+        " This is not what we want.
+        " We want a dark one.
+        " So, we  must make sure the  variable is deleted before  trying to load
+        " the dark colorscheme.
         "}}}
         unlet! g:seoul256_background
         colo seoul256
         " We  enable 'cul'  in  a  dark colorscheme,  but  it  can be  extremely
-        " cpu-consuming when  you move  horizontally (j,  k, w,  b, e,  …) and
+        " cpu-consuming when  you move  horizontally (j,  k, w,  b, e,  ...) and
         " 'showcmd' is enabled.
         call s:cursorline(1)
         call s:change_cursor_color('#9a7372')
@@ -292,12 +297,12 @@ endfu
 
 fu! s:hl_yanked_text() abort "{{{2
     try
-        "                            ┌ don't highlight anything if we didn't copy anything
-        "                            │
-        "                            │                          ┌ don't highlight anything if Vim has copied
-        "                            │                          │ the visual selection in `*` after we leave
-        "                            │                          │ visual mode
-        "  ┌─────────────────────────┤    ┌─────────────────────┤
+        "  ┌ don't highlight anything if we didn't copy anything
+        "  │
+        "  │                              ┌ don't highlight anything if Vim has copied
+        "  │                              │ the visual selection in `*` after we leave
+        "  │                              │ visual mode
+        "  ├─────────────────────────┐    ├─────────────────────┐
         if v:event.operator isnot# 'y' || v:event.regname is# '*'
             return
         endif
@@ -323,32 +328,41 @@ fu! s:hl_yanked_text() abort "{{{2
 endfu
 
 fu! s:lightness(more, ...) abort "{{{2
+    " toggle between 2 predefined levels of lightness
     if a:0
-        let g:seoul256_light_background = g:seoul256_light_background ==# a:1 ? a:2 : a:1
-        colo seoul256-light
-        let level = g:seoul256_light_background - 252 + 1
+        if &bg is# 'light'
+            let g:seoul256_light_background =
+                \ get(g:, 'seoul256_light_background', 253) ==# a:1 ? a:2 : a:1
+            colo seoul256-light
+            let level = get(g:, 'seoul256_light_background', 253) - 252 + 1
+        else
+            let g:seoul256_background =
+                \ get(g:, 'seoul256_background', 237) ==# 233 ? 237 : 233
+            colo seoul256
+            let level = get(g:, 'seoul256_background', 237) - 233 + 1
+        endif
+
         call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
         return
     endif
 
-    let is_light = g:seoul256_current_bg >= 252 && g:seoul256_current_bg <= 256
-
-    if is_light
+    " increase or decrease the lightness
+    if &bg is# 'light'
         " We need to make `g:seoul256_light_background` cycle through [252, 256].
 
-        " How to make a number `n` cycle through [a, a+1, …, a+p] ?{{{
-        "                                                 ^
-        "                                                 `n` will always be somewhere in the middle
+        " How to make a number `n` cycle through [a, a+1, ..., a+p] ?{{{
+        "                                                   ^
+        "                                                   `n` will always be somewhere in the middle
         "
         " Let's simplify the pb, and cycle from 0 up to `p`. Solution:
         "
         "         • initialize `n` to 0
         "         • use the formula  (n+1)%(p+1)  to update `n`
-        "                             └─┤ └────┤
-        "                               │      └ but don't go above `p`
-        "                               │        read this as:  “p+1 is off-limit”
-        "                               │
-        "                               └ increment
+        "                             ├─┘ ├────┘
+        "                             │   └ but don't go above `p`
+        "                             │     read this as:  “p+1 is off-limit”
+        "                             │
+        "                             └ increment
         "
         " To use this solution, we need to find a link between the problem we've
         " just solved and our original problem.
@@ -371,17 +385,15 @@ fu! s:lightness(more, ...) abort "{{{2
         "     ⇔    d2    = (  d1 + 1)%(p+1)
         "     ⇔ n2 - a   = (n1-a + 1)%(p+1)
         "
-        "                                   ┌ final formula
-        "                  ┌────────────────┤
+        "                  ┌ final formula
+        "                  ├────────────────┐
         "     ⇔ n2       = (n1-a +1)%(p+1) +a
-        "                   └─────┤ └────┤ └┤
-        "                         │      │  └ we want the distance from 0, not from `a`, so add `a`
-        "                         │      │
-        "                         │      └ but don't go too far
-        "                         │
-        "                         └ move away (+1) from `a` (n1-a)
+        "                   ├─────┘ ├────┘ ├┘
+        "                   │       │      └ we want the distance from 0, not from `a`, so add `a`
+        "                   │       └ but don't go too far
+        "                   └ move away (+1) from `a` (n1-a)
     "}}}
-        " How to make a number cycle through [a+p, a+p-1, …, a] ?{{{
+        " How to make a number cycle through [a+p, a+p-1, ..., a] ?{{{
         "
         " We want to cycle from `a+p` down to `a`.
         "
@@ -392,16 +404,17 @@ fu! s:lightness(more, ...) abort "{{{2
         "
         "            d2   = (    d1   + 1)%(p+1)
         "      ⇔ a+p - n2 = (a+p - n1 + 1)%(p+1)
-        "                                             ┌ final formula
-        "                     ┌───────────────────────┤
+        "
+        "                     ┌ final formula
+        "                     ├───────────────────────┐
         "      ⇔         n2 = a+p - (a+p - n1 +1)%(p+1)
-        "                     └─┤    └─────────┤ └────┤
-        "                       │              │      └ but don't go too far
-        "                       │              │        read this as:  “a+p is off-limit”
-        "                       │              │
-        "                       │              └ move away (+1) from `a+p` (a+p - n1)
-        "                       │
-        "                       └ we want the distance from 0, not from `a+p`, so add `a+p`
+        "                     ├─┘    ├─────────┘ ├────┘
+        "                     │      │           └ but don't go too far
+        "                     │      │             read this as:  “a+p is off-limit”
+        "                     │      │
+        "                     │      └ move away (+1) from `a+p` (a+p - n1)
+        "                     │
+        "                     └ we want the distance from 0, not from `a+p`, so add `a+p`
         "}}}
 
         "   ┌ value to be used the NEXT time we execute `:colo seoul256-light`
@@ -579,9 +592,6 @@ call s:toggle_settings('stl_list_position',
 call s:toggle_settings('lightness',
 \                      'l',
 \                      '[253, 256]' )
-" TODO:
-"
-" The mapping should toggle between [233, 237] when the colorscheme is dark.
 
 " 5 {{{2
 
@@ -589,7 +599,7 @@ call s:toggle_settings('colorscheme',
 \                      'C',
 \                      'call <sid>colorscheme(1)',
 \                      'call <sid>colorscheme(0)',
-\                      'get(g:, "colors_name", "") =~? "light"')
+\                      '&bg is# "light"')
 
 " Mnemonic:
 " D for Debug
@@ -732,8 +742,8 @@ call s:toggle_settings('auto open folds',
 \                      'OFF',
 \                      '<sid>auto_open_fold("is_active")')
 "                        │
-"                        └─ We can't use a  script-local variable, because we can't
-"                           access it from a mapping:
+"                        └ We can't use a  script-local variable, because we can't
+"                          access it from a mapping:
 "
 "                                   exists('s:my_var')       ✘
 "                                   exists('<sid>my_var')    ✘
