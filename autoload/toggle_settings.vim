@@ -275,7 +275,7 @@ fu! s:formatprg(scope) abort "{{{2
         " use a dictionary to  save the local value of 'fp'  in any buffer where
         " we use our mappings to toggle the latter
         let s:local_fp_save[bufnr('%')] = &l:fp
-        setl fp<
+        set fp<
     elseif a:scope is# 'local' && exists('s:local_fp_save') && has_key(s:local_fp_save, bufnr('%'))
         " `js-beautify` is a formatting tool for js, html, css.
         "
