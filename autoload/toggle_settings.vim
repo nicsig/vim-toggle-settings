@@ -228,10 +228,17 @@ fu! s:cursorline(enable) abort "{{{2
         setl cursorline
         augroup my_cursorline
             au!
-            au VimEnter,WinEnter * setl cursorline
-            au WinLeave          * setl nocursorline
-            au InsertEnter       * setl nocursorline
-            au InsertLeave       * setl cursorline
+            " Why `BufWinEnter` and `BufWinLeave`?{{{
+            "
+            " If you load  another buffer in the current  window, `WinLeave` and
+            " `WinEnter` are not fired.
+            " It may happen, for example, when  you move in the quickfix list by
+            " pressing `]q`.
+            "}}}
+            au VimEnter,BufWinEnter,WinEnter * setl cursorline
+            au BufWinLeave,WinLeave          * setl nocursorline
+            au InsertEnter                   * setl nocursorline
+            au InsertLeave                   * setl cursorline
         augroup END
     else
         setl nocursorline
