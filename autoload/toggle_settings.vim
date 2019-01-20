@@ -241,9 +241,9 @@ fu! s:cursorline(enable) abort "{{{2
             au InsertLeave                   * setl cursorline
         augroup END
     else
-        setl nocursorline
         sil! au! my_cursorline
         sil! aug! my_cursorline
+        setl nocursorline
     endif
 endfu
 
