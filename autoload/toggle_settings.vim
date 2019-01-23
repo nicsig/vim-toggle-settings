@@ -27,8 +27,8 @@ let g:autoloaded_toggle_settings = 1
 "
 "            ┌ boolean argument:
 "            │
-"            │      • when it's 1 it means we want to enable  some state
-"            │      • "         0                     disable "
+"            │      - when it's 1 it means we want to enable  some state
+"            │      - "         0                     disable "
 "            │
 "         if a:enable                       ✘
 "             let s:save = ...
@@ -208,12 +208,12 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
     " We are not interested in level 1.
     " The 3 other levels are enough. If I want to see:
     "
-    "     • everything = 0
+    "     - everything = 0
     "
-    "     • what is useful = 2
+    "     - what is useful = 2
     "       has a replacement character: `cchar`, {'conceal': 'x'}
     "
-    "     • nothing = 3
+    "     - nothing = 3
     if new_val ==# 1
         let new_val = a:is_fwd ? 2 : 0
     endif
@@ -363,8 +363,8 @@ fu! s:lightness(more, ...) abort "{{{2
         "
         " Let's simplify the pb, and cycle from 0 up to `p`. Solution:
         "
-        "         • initialize `n` to 0
-        "         • use the formula  (n+1)%(p+1)  to update `n`
+        "         - initialize `n` to 0
+        "         - use the formula  (n+1)%(p+1)  to update `n`
         "                             ├─┘ ├────┘
         "                             │   └ but don't go above `p`
         "                             │     read this as:  “p+1 is off-limit”
@@ -380,9 +380,9 @@ fu! s:lightness(more, ...) abort "{{{2
         " Updated_solution:
         "                              before, it was `0`
         "                              v
-        "         • initialize `n` to `a`
+        "         - initialize `n` to `a`
         "
-        "         • use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
+        "         - use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
         "                 ^                                           ^
         "                 before, it was `n`                          before, it was `0`
         "
@@ -404,8 +404,8 @@ fu! s:lightness(more, ...) abort "{{{2
         "
         " We want to cycle from `a+p` down to `a`.
         "
-        "         • initialize `n` to `a+p`
-        "         • use the formula  (d+1)%(p+1)  to update the DISTANCE between `n` and `a+p`
+        "         - initialize `n` to `a+p`
+        "         - use the formula  (d+1)%(p+1)  to update the DISTANCE between `n` and `a+p`
         "
         " Formalization:
         "
