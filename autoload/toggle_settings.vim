@@ -669,7 +669,7 @@ call s:toggle_settings('formatprg',
 " 7 {{{2
 
 call s:toggle_settings('showbreak',
-\                      'B',
+\                      'b',
 \                      'setl showbreak=↪',
 \                      'setl showbreak=',
 \                      'ON',
