@@ -139,10 +139,7 @@ fu! s:change_cursor_color(color) abort "{{{2
     "}}}
     let seq = '\033]12;'.color.'\007'
 
-    " FIXME: Doesn't work in Neovim.
-
-    " TODO: How to use `system()` instead of `:!`?
-    " We wouldn't need to escape `#`...
+    " FIXME: Doesn't work in Neovim. I think you need to set `'gcr'` instead.
 
     " FIXME: After changing the colorscheme, the cursor quickly blinks at random moments.
     " It's subtle but distracting.
@@ -154,7 +151,28 @@ fu! s:colorscheme(is_light) abort "{{{2
     if a:is_light
         colo seoul256-light
         call s:cursorline(0)
-        call s:change_cursor_color('#373b41')
+        " In the past we used `#373b41`.{{{
+        "
+        " But for  some reason, the  st terminal doesn't support  hexcodes (even
+        " after patching it to support the OSC12 sequence):
+        "
+        "     $ printf '\033]12;#9a7372\007'
+        "
+        " The command produces some black color, regardless of the hexcode.
+        " It does support a decimal code though, so we use that now.
+        "}}}
+        " Why do you limit yourself to colors below 15?{{{
+        "
+        " Urxvt doesn't support the colors beyond that:
+        "
+        "     # start urxvt from another terminal
+        "
+        "     $ printf '\033]12;123\007'
+        "
+        "     # quit urxvt
+        "     urxvt: unable to parse color '123', using pink instead.~
+        "}}}
+        call s:change_cursor_color('0')
     else
         " Why unletting `g:seoul256_background`?{{{
         "
@@ -179,7 +197,8 @@ fu! s:colorscheme(is_light) abort "{{{2
         " cpu-consuming when  you move  horizontally (j,  k, w,  b, e,  ...) and
         " 'showcmd' is enabled.
         call s:cursorline(1)
-        call s:change_cursor_color('#9a7372')
+        " In the past we used `#9a7372`.
+        call s:change_cursor_color('3')
     endif
 endfu
 
@@ -568,6 +587,7 @@ fu! s:virtualedit(action) abort "{{{2
     endif
     redraws!
 endfu
+" }}}1
 
 " Mappings {{{1
 " 2 "{{{2
