@@ -172,6 +172,7 @@ fu! s:colorscheme(is_light) abort "{{{2
         "     # quit urxvt
         "     urxvt: unable to parse color '123', using pink instead.~
         "}}}
+        " FIXME: Our current xterm doesn't support decimal codes, only hexcodes.
         call s:change_cursor_color('0')
     else
         " Why unletting `g:seoul256_background`?{{{
