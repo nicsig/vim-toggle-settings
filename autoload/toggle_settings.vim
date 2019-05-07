@@ -137,13 +137,28 @@ fu! s:change_cursor_color(color) abort "{{{2
     "         → Ps = 12
     "           Change colour of text cursor foreground to Pt
     "}}}
-    let seq = '\033]12;'.color.'\007'
+    " Do I need double quotes?{{{
+    "
+    " You don't need them if you send the sequence to the terminal via `$ printf`.
+    " You *do* need them, if you send the sequence via `writefile()`:
+    "
+    "     call writefile([seq], '/dev/tty', 'b')
+    "}}}
+    let seq = "\033]12;".color."\007"
 
     " FIXME: Doesn't work in Neovim. I think you need to set `'gcr'` instead.
 
     " FIXME: After changing the colorscheme, the cursor quickly blinks at random moments.
     " It's subtle but distracting.
     " I think it's because of this sequence...
+    " Why don't you use `writefile()` to send the sequence to the terminal?{{{
+    "
+    " It wouldn't work in gVim:
+    "
+    "     $ gvim
+    "     :call writefile(["\033]12;3\007"], '/dev/tty', 'b')
+    "     E482: Can't create file /dev/tty~
+    "}}}
     exe 'sil !printf '.string(seq)
 endfu
 
