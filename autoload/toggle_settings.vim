@@ -652,8 +652,8 @@ call s:toggle_settings('verbose errors',
 \                      'call <sid>verbose_errors(0)',
 \                      'get(g:, "my_verbose_errors", 0) ==# 1')
 
-call s:toggle_settings('edit Help file',
-\                      'H',
+call s:toggle_settings('edit help file',
+\                      '~',
 \                      'call <sid>edit_help_file(1)',
 \                      'call <sid>edit_help_file(0)',
 \                      'empty(maparg("q", "n", 0, 1))')
