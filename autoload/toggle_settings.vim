@@ -505,6 +505,12 @@ fu! s:matchparen(enable) abort "{{{2
     echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
 endfu
 
+fu! s:showbreak(enable) abort "{{{2
+    let &showbreak = a:enable ? '↪' : ''
+    " Used in the autocmd `my_showbreak` in vimrc to (re)set `'showbreak'`.
+    let b:showbreak = a:enable
+endfu
+
 fu! s:stl_list_position(is_fwd, ...) abort "{{{2
     if a:0
         let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) ==# 0
@@ -706,8 +712,8 @@ call s:toggle_settings('formatprg',
 
 call s:toggle_settings('showbreak',
 \                      'b',
-\                      'setl showbreak=↪',
-\                      'setl showbreak=',
+\                      'call <sid>showbreak(1)',
+\                      'call <sid>showbreak(0)',
 \                      'ON',
 \                      'OFF',
 \                      '!empty(&sbr)')
