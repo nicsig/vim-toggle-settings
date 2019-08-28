@@ -651,12 +651,23 @@ call s:toggle_settings('colorscheme',
 \                      '&bg is# "light"')
 
 " Mnemonic:
-" D for Debug
 call s:toggle_settings('verbose errors',
-\                      'D',
+\                      'V',
 \                      'call <sid>verbose_errors(1)',
 \                      'call <sid>verbose_errors(0)',
 \                      'get(g:, "my_verbose_errors", 0) ==# 1')
+
+call s:toggle_settings('diff everything',
+\                      'D',
+\                      'windo diffthis',
+\                      'diffoff!',
+\                      '&l:diff')
+
+call s:toggle_settings('diff',
+\                      'd',
+\                      'diffthis',
+\                      'diffoff',
+\                      '&l:diff')
 
 call s:toggle_settings('edit help file',
 \                      '~',
@@ -717,14 +728,6 @@ call s:toggle_settings('showbreak',
 \                      'ON',
 \                      'OFF',
 \                      '!empty(&sbr)')
-
-call s:toggle_settings('diff',
-\                      'd',
-\                      'diffthis',
-\                      'diffoff',
-\                      'ON',
-\                      'OFF',
-\                      '&l:diff')
 
 call s:toggle_settings('fugitive branch',
 \                      'g',
