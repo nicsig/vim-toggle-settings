@@ -294,7 +294,7 @@ fu! s:edit_help_file(allow) "{{{2
             exe 'sil unmap <buffer> '.a_key
         endfor
 
-        for pat in map(keys, {i,v ->  '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'.v."'"})
+        for pat in map(keys, {_,v ->  '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'.v."'"})
             let b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
         endfor
 
