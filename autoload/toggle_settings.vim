@@ -148,6 +148,9 @@ fu! s:change_cursor_color(color) abort "{{{2
 
     " FIXME: Doesn't work in Neovim. I think you need to set `'gcr'` instead.
 
+    " FIXME: The color of the cusor is changed for all tmux panes.
+    " It should only affect the current tmux pane.
+
     " FIXME: After changing the colorscheme, the cursor quickly blinks at random moments.
     " It's subtle but distracting.
     " I think it's because of this sequence...
