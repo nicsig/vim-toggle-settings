@@ -66,6 +66,11 @@ augroup END
 
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
+    " TODO: Refactor the code.
+    " Don't try to toggle a global auto-open-fold state.
+    " Try to toggle a *local* state.
+    " How?
+    " By installing custom mappings on `j`, `k`, `C-d`, `C-u`, `gg`, `G`.
     if a:action is# 'is_active'
         return exists('s:fold_options_save')
     elseif a:action is# 'enable' && !exists('s:fold_options_save')
@@ -191,6 +196,7 @@ fu! s:colorscheme(is_light) abort "{{{2
         "     urxvt: unable to parse color '123', using pink instead.~
         "}}}
         " FIXME: Our current xterm doesn't support decimal codes, only hexcodes.
+        " Update: What about `rgb:12/34/56`?
         call s:change_cursor_color('0')
     else
         " Why unletting `g:seoul256_background`?{{{
@@ -401,28 +407,28 @@ fu! s:lightness(more, ...) abort "{{{2
         "
         " Let's simplify the pb, and cycle from 0 up to `p`. Solution:
         "
-        "         - initialize `n` to 0
-        "         - use the formula  (n+1)%(p+1)  to update `n`
-        "                             ├─┘ ├────┘
-        "                             │   └ but don't go above `p`
-        "                             │     read this as:  “p+1 is off-limit”
-        "                             │
-        "                             └ increment
+        "     - initialize `n` to 0
+        "     - use the formula  (n+1)%(p+1)  to update `n`
+        "                         ├─┘ ├────┘
+        "                         │   └ but don't go above `p`
+        "                         │     read this as:  “p+1 is off-limit”
+        "                         │
+        "                         └ increment
         "
         " To use this solution, we need to find a link between the problem we've
         " just solved and our original problem.
         " In the latter, what cycles between 0 and `p`?
         "
-        "         the distance between `a` and `n`
+        "     the distance between `a` and `n`
         "
         " Updated_solution:
-        "                              before, it was `0`
-        "                              v
-        "         - initialize `n` to `a`
+        "                          before, it was `0`
+        "                          v
+        "     - initialize `n` to `a`
         "
-        "         - use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
-        "                 ^                                           ^
-        "                 before, it was `n`                          before, it was `0`
+        "     - use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
+        "             ^                                           ^
+        "             before, it was `n`                          before, it was `0`
         "
         " Let's formalize the last sentence, using  `d1`, `d2`, `n1` and `n2` to
         " stand for the old / new distances and the old / new values of `n`:
@@ -442,8 +448,8 @@ fu! s:lightness(more, ...) abort "{{{2
         "
         " We want to cycle from `a+p` down to `a`.
         "
-        "         - initialize `n` to `a+p`
-        "         - use the formula  (d+1)%(p+1)  to update the DISTANCE between `n` and `a+p`
+        "    - initialize `n` to `a+p`
+        "    - use the formula  (d+1)%(p+1)  to update the DISTANCE between `n` and `a+p`
         "
         " Formalization:
         "
@@ -642,7 +648,7 @@ call s:toggle_settings('stl_list_position',
 
 " Do NOT use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('lightness',
-\                      'l',
+\                      'L',
 \                      '[253, 256]' )
 
 " 5 {{{2
@@ -741,7 +747,7 @@ call s:toggle_settings('fugitive branch',
 \                      'get(g:, "my_fugitive_branch", 0)')
 
 call s:toggle_settings('cursorline',
-\                      'L',
+\                      'l',
 \                      'call <sid>cursorline(1)',
 \                      'call <sid>cursorline(0)',
 \                      'ON',
