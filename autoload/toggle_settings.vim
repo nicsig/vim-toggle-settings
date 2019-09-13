@@ -110,7 +110,7 @@ endfu
 fu! s:change_cursor_color(color) abort "{{{2
     " Why?{{{
     "
-    " We're going to execute a `$ printf` command, via `:!`.
+    " We're going to execute a `printf` command, via `:!`.
     "
     " It may contain a `#` character (prefix in hex code).
     " On Vim's command-line, this character is automatically expanded
@@ -144,7 +144,7 @@ fu! s:change_cursor_color(color) abort "{{{2
     "}}}
     " Do I need double quotes?{{{
     "
-    " You don't need them if you send the sequence to the terminal via `$ printf`.
+    " You don't need them if you send the sequence to the terminal via `printf`.
     " You *do* need them, if you send the sequence via `writefile()`:
     "
     "     call writefile([seq], '/dev/tty', 'b')
@@ -678,12 +678,6 @@ call s:toggle_settings('diff',
 \                      'diffoff',
 \                      '&l:diff')
 
-call s:toggle_settings('edit help file',
-\                      '~',
-\                      'call <sid>edit_help_file(1)',
-\                      'call <sid>edit_help_file(0)',
-\                      'empty(maparg("q", "n", 0, 1))')
-
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
 "
@@ -727,6 +721,18 @@ call s:toggle_settings('formatprg',
 \                      'call <sid>formatprg("global")',
 \                      'call <sid>formatprg("local")',
 \                      '&g:fp is# &l:fp')
+
+call s:toggle_settings('virtualedit',
+\                      'v',
+\                      'call <sid>virtualedit("enable")',
+\                      'call <sid>virtualedit("disable")',
+\                      '<sid>virtualedit("is_all")')
+
+call s:toggle_settings('edit help file',
+\                      '~',
+\                      'call <sid>edit_help_file(1)',
+\                      'call <sid>edit_help_file(0)',
+\                      'empty(maparg("q", "n", 0, 1))')
 
 " 7 {{{2
 
@@ -777,14 +783,6 @@ call s:toggle_settings('fold title',
 \                      'full',
 \                      'short',
 \                      'get(b:, "foldtitle_full", 0)')
-
-call s:toggle_settings('virtualedit',
-\                      'v',
-\                      'call <sid>virtualedit("enable")',
-\                      'call <sid>virtualedit("disable")',
-\                      'ALL',
-\                      '∅',
-\                      '<sid>virtualedit("is_all")')
 
 call s:toggle_settings('hl yanked text',
 \                      'y',
