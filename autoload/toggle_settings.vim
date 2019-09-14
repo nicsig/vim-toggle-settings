@@ -267,6 +267,10 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
 endfu
 
 fu! s:cursorline(enable) abort "{{{2
+    " If we're in goyo mode, we only want to toggle 'cul' in the current window.
+    " Otherwise, when leaving the mode, the state of 'cul' in the current window
+    " and in the other ones can be unexpected.
+    if get(g:, 'in_goyo_mode', 0) | setl cul! | return | endif
     " 'cursorline' only in the active window and not in insert mode.
     if a:enable
         setl cursorline
@@ -678,6 +682,12 @@ call s:toggle_settings('diff',
 \                      'diffoff',
 \                      '&l:diff')
 
+call s:toggle_settings('cursorline',
+\                      'l',
+\                      'call <sid>cursorline(1)',
+\                      'call <sid>cursorline(0)',
+\                      'exists("#my_cursorline")')
+
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
 "
@@ -751,14 +761,6 @@ call s:toggle_settings('fugitive branch',
 \                      'ON',
 \                      'OFF',
 \                      'get(g:, "my_fugitive_branch", 0)')
-
-call s:toggle_settings('cursorline',
-\                      'l',
-\                      'call <sid>cursorline(1)',
-\                      'call <sid>cursorline(0)',
-\                      'ON',
-\                      'OFF',
-\                      'exists("#my_cursorline")')
 
 call s:toggle_settings('nrformats',
 \                      'N',
