@@ -4,9 +4,10 @@ endif
 let g:autoloaded_toggle_settings = 1
 
 " Don't forget to properly handle repeated (dis)activations. {{{
+"
 " Necessary when you save/restore a state with a custom variable.
 "
-" When you  write a function  to activate/disactivate/toggle some state,  do NOT
+" When you write a function  to activate/disactivate/toggle some state, do *not*
 " assume it will only be used for repeated toggling.
 " It  can also  be used  for (accidental)  repeated activation,  or (accidental)
 " repeated disactivation.
@@ -51,11 +52,16 @@ let g:autoloaded_toggle_settings = 1
 " Which functions are concerned?{{{
 "
 " All functions make  you transit to a new known  state (are there exceptions?).
-" But some of them do it from a  known state, while others do it from an UNKNOWN
-" one.  The current issue concerns the  latter, because when you transit from an
-" unknown state, you have to save it first for the future restoration. You don't
-" need to do that when you know it in advance.
+" But  some of  them do  it  from a  known state,  while  others do  it from  an
+" *unknown* one.
+" The  current issue  concerns  the latter,  because when  you  transit from  an
+" unknown state, you have to save it first for the future restoration.
+" You don't need to do that when you know it in advance.
 "}}}
+
+" Init {{{1
+
+let s:AUTO_OPEN_FOLD_MOTIONS = ['j', 'k', '<c-d>', '<c-u>', 'gg', 'G']
 
 " Autocmds {{{1
 
@@ -66,45 +72,78 @@ augroup END
 
 " Functions {{{1
 fu! s:auto_open_fold(action) abort "{{{2
-    " TODO: Refactor the code.
-    " Don't try to toggle a global auto-open-fold state.
-    " Try to toggle a *local* state.
-    " How?
-    " By installing custom mappings on `j`, `k`, `C-d`, `C-u`, `gg`, `G`.
-    if a:action is# 'is_active'
-        return exists('s:fold_options_save')
-    elseif a:action is# 'enable' && !exists('s:fold_options_save')
-        let s:fold_options_save = {
-        \                           'close'  : &foldclose,
-        \                           'open'   : &foldopen,
-        \                           'enable' : &foldenable,
-        \                           'level'  : &foldlevel,
-        \                         }
-
-        " Consider setting 'foldnestmax' if you use 'indent'/'syntax' as a folding method.{{{
-        "
-        " If you set the local value of  'fdm' to 'indent' or 'syntax', Vim will
-        " automatically fold the buffer according to its indentation / syntax.
-        "
-        " It can lead to deeply nested folds. This can be annoying when you have
-        " to open  a lot of  folds to  read the contents  of a line.
-        "
-        " One way to tackle this issue  is to reduce the value of 'foldnestmax'.
-        " By default  it's 20 (which is  the deepest level of  nested folds that
-        " Vim can produce with these 2 methods  anyway). If you set it to 1, Vim
-        " will only produce folds for the outermost blocks (functions/methods).
-        "}}}
-        set foldclose=all " close a fold if we leave it with any command
-        set foldopen=all  " open  a fold if we enter it with any command
-        set foldenable
-        set foldlevel=0   " close all folds by default
-    elseif a:action is# 'disable' && exists('s:fold_options_save')
-        for op in keys(s:fold_options_save)
-            exe 'let &fold'.op.' = s:fold_options_save.'.op
+    if a:action is# 'enable' && !exists('b:auto_open_fold_mappings')
+        let b:auto_open_fold_mappings = lg#map#save('n', 1, s:AUTO_OPEN_FOLD_MOTIONS)
+        for motion in s:AUTO_OPEN_FOLD_MOTIONS
+            " Why do you open all folds with `zR`?{{{
+            "
+            " This is necessary when you scroll backward.
+            "
+            " Suppose you are  on the first line of  a fold and you move  one line back;
+            " your cursor will *not* land on the previous line, but on the first line of
+            " the previous fold.
+            "}}}
+            " Why `:sil!` before `:norm!`?{{{
+            "
+            " If you're on  the last line and  you try to move  forward, it will
+            " fail, and the rest of the sequence (`zMzv`) will not be processed.
+            " Same issue if you try to move backward while on the first line.
+            " `silent!` makes sure that the whole sequence is processed no matter what.
+            "}}}
+            exe 'nno <buffer><nowait><silent> '..motion..' :<c-u>sil! norm! zR'..motion..'zMzv<cr>'
         endfor
-        norm! zMzv
-        unlet! s:fold_options_save
+    elseif a:action is# 'disable' && exists('b:auto_open_fold_mappings')
+        call lg#map#restore(b:auto_open_fold_mappings)
+        unlet! b:auto_open_fold_mappings
     endif
+
+    " Old Code:{{{
+    "
+    "     if a:action is# 'is_active'
+    "         return exists('s:fold_options_save')
+    "     elseif a:action is# 'enable' && !exists('s:fold_options_save')
+    "         let s:fold_options_save = {
+    "         \                           'close'  : &foldclose,
+    "         \                           'open'   : &foldopen,
+    "         \                           'enable' : &foldenable,
+    "         \                           'level'  : &foldlevel,
+    "         \                         }
+    "
+    "         " Consider setting 'foldnestmax' if you use 'indent'/'syntax' as a folding method.{{{
+    "         "
+    "         " If you set the local value of  'fdm' to 'indent' or 'syntax', Vim will
+    "         " automatically fold the buffer according to its indentation / syntax.
+    "         "
+    "         " It can lead to deeply nested folds. This can be annoying when you have
+    "         " to open  a lot of  folds to  read the contents  of a line.
+    "         "
+    "         " One way to tackle this issue  is to reduce the value of 'foldnestmax'.
+    "         " By default  it's 20 (which is  the deepest level of  nested folds that
+    "         " Vim can produce with these 2 methods  anyway). If you set it to 1, Vim
+    "         " will only produce folds for the outermost blocks (functions/methods).
+    "        "}}}
+    "         set foldclose=all " close a fold if we leave it with any command
+    "         set foldopen=all  " open  a fold if we enter it with any command
+    "         set foldenable
+    "         set foldlevel=0   " close all folds by default
+    "     elseif a:action is# 'disable' && exists('s:fold_options_save')
+    "         for op in keys(s:fold_options_save)
+    "             exe 'let &fold'.op.' = s:fold_options_save.'.op
+    "         endfor
+    "         norm! zMzv
+    "         unlet! s:fold_options_save
+    "     endif
+    "}}}
+    "   What did it do?{{{
+    "
+    " It toggled  a *global* auto-open-fold  state, by (re)setting  some folding
+    " options, such as `'foldopen'` and `'foldclose'`.
+    "}}}
+    "   Why don't you use it anymore?{{{
+    "
+    " In practice, that's never what I want.
+    " I want to toggle a *local* state (local to the current buffer).
+    "}}}
 endfu
 
 fu! s:change_cursor_color(color) abort "{{{2
@@ -336,11 +375,10 @@ fu! s:formatprg(scope) abort "{{{2
         "
         " Installation:
         "
-        "         sudo npm -g install js-beautify
+        "     $ sudo npm -g install js-beautify
         "
         " Documentation:
-        "
-        "         https://github.com/beautify-web/js-beautify
+        " https://github.com/beautify-web/js-beautify
         "
         " The tool has  many options, you can use the  ones you find interesting
         " in the value of 'fp'.
@@ -627,15 +665,20 @@ endfu
 " Mappings {{{1
 " 2 "{{{2
 
-call s:toggle_settings('cursorcolumn'  , 'o')
-call s:toggle_settings('hlsearch'      , 'h')
 call s:toggle_settings('list'          , 'I')
 call s:toggle_settings('previewwindow' , 'P')
 call s:toggle_settings('showcmd'       , 'W')
+call s:toggle_settings('hlsearch'      , 'h')
+call s:toggle_settings('cursorcolumn'  , 'o')
 call s:toggle_settings('spell'         , 's')
 call s:toggle_settings('wrap'          , 'w')
 
 " 3 {{{2
+
+" Do *not* use `]L`: it's already taken to move to the last entry in the ll.
+call s:toggle_settings('lightness',
+\                      'L',
+\                      '[253, 256]' )
 
 call s:toggle_settings('conceallevel',
 \                      'c',
@@ -650,11 +693,6 @@ call s:toggle_settings('stl_list_position',
 "                        if we don't use them, something should be improved
 "                        in the design of `s:toggle_settings()`
 
-" Do NOT use `]L`: it's already taken to move to the last entry in the ll.
-call s:toggle_settings('lightness',
-\                      'L',
-\                      '[253, 256]' )
-
 " 5 {{{2
 
 call s:toggle_settings('colorscheme',
@@ -663,18 +701,18 @@ call s:toggle_settings('colorscheme',
 \                      'call <sid>colorscheme(0)',
 \                      '&bg is# "light"')
 
+call s:toggle_settings('diff everything',
+\                      'D',
+\                      'windo diffthis',
+\                      'diffoff!',
+\                      '&l:diff')
+
 " Mnemonic:
 call s:toggle_settings('verbose errors',
 \                      'V',
 \                      'call <sid>verbose_errors(1)',
 \                      'call <sid>verbose_errors(0)',
 \                      'get(g:, "my_verbose_errors", 0) ==# 1')
-
-call s:toggle_settings('diff everything',
-\                      'D',
-\                      'windo diffthis',
-\                      'diffoff!',
-\                      '&l:diff')
 
 call s:toggle_settings('diff',
 \                      'd',
@@ -738,6 +776,13 @@ call s:toggle_settings('virtualedit',
 \                      'call <sid>virtualedit("disable")',
 \                      '<sid>virtualedit("is_all")')
 
+" Vim uses `z` as a prefix to build all fold-related commands in normal mode.
+call s:toggle_settings('auto open fold',
+\                      'z',
+\                      'call <sid>auto_open_fold("enable")',
+\                      'call <sid>auto_open_fold("disable")',
+\                      'exists("b:auto_open_fold_mappings")')
+
 call s:toggle_settings('edit help file',
 \                      '~',
 \                      'call <sid>edit_help_file(1)',
@@ -745,22 +790,6 @@ call s:toggle_settings('edit help file',
 \                      'empty(maparg("q", "n", 0, 1))')
 
 " 7 {{{2
-
-call s:toggle_settings('showbreak',
-\                      'b',
-\                      'call <sid>showbreak(1)',
-\                      'call <sid>showbreak(0)',
-\                      'ON',
-\                      'OFF',
-\                      '!empty(&sbr)')
-
-call s:toggle_settings('fugitive branch',
-\                      'g',
-\                      'let g:my_fugitive_branch = 1',
-\                      'let g:my_fugitive_branch = 0',
-\                      'ON',
-\                      'OFF',
-\                      'get(g:, "my_fugitive_branch", 0)')
 
 call s:toggle_settings('nrformats',
 \                      'N',
@@ -778,6 +807,22 @@ call s:toggle_settings('spelllang',
 \                      'EN',
 \                      '&l:spl is# "fr"')
 
+call s:toggle_settings('showbreak',
+\                      'b',
+\                      'call <sid>showbreak(1)',
+\                      'call <sid>showbreak(0)',
+\                      'ON',
+\                      'OFF',
+\                      '!empty(&sbr)')
+
+call s:toggle_settings('fugitive branch',
+\                      'g',
+\                      'let g:my_fugitive_branch = 1',
+\                      'let g:my_fugitive_branch = 0',
+\                      'ON',
+\                      'OFF',
+\                      'get(g:, "my_fugitive_branch", 0)')
+
 call s:toggle_settings('fold title',
 \                      't',
 \                      'let b:foldtitle_full=1 <bar> redraw!',
@@ -793,19 +838,10 @@ call s:toggle_settings('hl yanked text',
 \                      'ON',
 \                      'OFF',
 \                      '<sid>toggle_hl_yanked_text("is_active")')
-
-" Vim uses `z` as a prefix to build all fold-related commands in normal mode.
-call s:toggle_settings('auto open folds',
-\                      'z',
-\                      'call <sid>auto_open_fold("enable")',
-\                      'call <sid>auto_open_fold("disable")',
-\                      'ON',
-\                      'OFF',
-\                      '<sid>auto_open_fold("is_active")')
 "                        │
 "                        └ We can't use a  script-local variable, because we can't
 "                          access it from a mapping:
 "
-"                                   exists('s:my_var')       ✘
-"                                   exists('<sid>my_var')    ✘
+"                              exists('s:my_var')       ✘
+"                              exists('<sid>my_var')    ✘
 
