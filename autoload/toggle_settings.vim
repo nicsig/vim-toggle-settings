@@ -61,7 +61,22 @@ let g:autoloaded_toggle_settings = 1
 
 " Init {{{1
 
-let s:AUTO_OPEN_FOLD_MOTIONS = ['j', 'k', '<c-d>', '<c-u>', 'gg', 'G']
+" Why a dictionary instead of a simpler list?{{{
+"
+" With a list, we would pass the raw motions to `s:move_and_open_fold()`.
+" This would cause an issue with `C-u`,  probably because it would be pressed on
+" the command-line instead of being passed.
+"
+" To avoid this kind of issue, we need an intermediary form for each key.
+"}}}
+let s:AOF_NOTATION2MOTION = {
+    \ 'j': 'j',
+    \ 'k': 'k',
+    \ 'c-d': "\<c-d>",
+    \ 'c-u': "\<c-u>",
+    \ 'gg': 'gg',
+    \ 'G': 'G',
+    \ }
 
 " Autocmds {{{1
 
@@ -71,10 +86,13 @@ augroup hl_yanked_text
 augroup END
 
 " Functions {{{1
-fu! s:auto_open_fold(action) abort "{{{2
+fu! toggle_settings#auto_open_fold(action) abort "{{{2
     if a:action is# 'enable' && !exists('b:auto_open_fold_mappings')
-        let b:auto_open_fold_mappings = lg#map#save('n', 1, s:AUTO_OPEN_FOLD_MOTIONS)
-        for motion in s:AUTO_OPEN_FOLD_MOTIONS
+        if foldclosed('.') != -1
+            norm! zvzz
+        endif
+        let b:auto_open_fold_mappings = lg#map#save('n', 1, values(s:AOF_NOTATION2MOTION))
+        for notation in keys(s:AOF_NOTATION2MOTION)
             " Why do you open all folds with `zR`?{{{
             "
             " This is necessary when you scroll backward.
@@ -90,7 +108,11 @@ fu! s:auto_open_fold(action) abort "{{{2
             " Same issue if you try to move backward while on the first line.
             " `silent!` makes sure that the whole sequence is processed no matter what.
             "}}}
-            exe 'nno <buffer><nowait><silent> '..motion..' :<c-u>sil! norm! zR'..motion..'zMzv<cr>'
+            exe printf(
+            \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s)<cr>',
+            \ s:AOF_NOTATION2MOTION[notation],
+            \ string(notation),
+            \ )
         endfor
     elseif a:action is# 'disable' && exists('b:auto_open_fold_mappings')
         call lg#map#restore(b:auto_open_fold_mappings)
@@ -143,7 +165,52 @@ fu! s:auto_open_fold(action) abort "{{{2
     "
     " In practice, that's never what I want.
     " I want to toggle a *local* state (local to the current buffer).
+    "
+    " ---
+    "
+    " Besides, suppose you want folds to be opened automatically in a given window.
+    " You enable the feature.
+    " After a while you're finished, and close the window.
+    " Now you need to restore the state as it was before enabling it.
+    " This is fiddly.
+    "
+    " OTOH, with a local state, you don't have anything to restore after closing
+    " the window.
     "}}}
+endfu
+
+fu! s:move_and_open_fold(notation) abort
+    let old_foldlevel = foldlevel('.')
+    if a:notation is# 'j'
+        norm! gj
+        if &ft is# 'markdown' && getline('.') =~# '^#\+$' | return | endif
+        let is_in_a_closed_fold = foldclosed('.') != -1
+        let new_foldlevel = foldlevel('.')
+        let level_changed = new_foldlevel != old_foldlevel
+        " need to  check `level_changed` to handle  the case where we  move from
+        " the end of a nested fold to the next line in the containing fold
+        if is_in_a_closed_fold || level_changed
+            norm! zMzv
+        endif
+    elseif a:notation is# 'k'
+        norm! gk
+        if &ft is# 'markdown' && getline('.') =~# '^#\+$' | return | endif
+        let moved_into_closed_fold = foldclosed('.') != -1
+        let new_foldlevel = foldlevel('.')
+        let level_changed = new_foldlevel != old_foldlevel
+        " need to  check `level_changed` to handle  the case where we  move from
+        " the start of a nested fold to the previous line in the containing fold
+        if level_changed || moved_into_closed_fold
+            sil! norm! gjzRgkzMzv
+            "  │
+            "  └ make sure all the keys are pressed, even if an error occurs
+        endif
+    else
+        " We want to pass a count if we've pressed `123G`.
+        " But we don't want any count if we've just pressed `G`.
+        let cnt = v:count ? v:count : ''
+        sil! exe 'norm! zR'..cnt..s:AOF_NOTATION2MOTION[a:notation]..'zMzv'
+    endif
 endfu
 
 fu! s:change_cursor_color(color) abort "{{{2
@@ -779,8 +846,8 @@ call s:toggle_settings('virtualedit',
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
 call s:toggle_settings('auto open fold',
 \                      'z',
-\                      'call <sid>auto_open_fold("enable")',
-\                      'call <sid>auto_open_fold("disable")',
+\                      'call toggle_settings#auto_open_fold("enable")',
+\                      'call toggle_settings#auto_open_fold("disable")',
 \                      'exists("b:auto_open_fold_mappings")')
 
 call s:toggle_settings('edit help file',
