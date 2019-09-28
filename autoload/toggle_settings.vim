@@ -61,19 +61,13 @@ let g:autoloaded_toggle_settings = 1
 
 " Init {{{1
 
-" Why a dictionary instead of a simpler list?{{{
-"
-" With a list, we would pass the raw motions to `s:move_and_open_fold()`.
-" This would cause an issue with `C-u`,  probably because it would be pressed on
-" the command-line instead of being passed.
-"
-" To avoid this kind of issue, we need an intermediary form for each key.
-"}}}
-let s:AOF_NOTATION2MOTION = {
+let s:AOF_LHS2NORM = {
     \ 'j': 'j',
     \ 'k': 'k',
-    \ 'c-d': "\<c-d>",
-    \ 'c-u': "\<c-u>",
+    \ '<down>': "\<down>",
+    \ '<up>': "\<up>",
+    \ '<c-d>': "\<c-d>",
+    \ '<c-u>': "\<c-u>",
     \ 'gg': 'gg',
     \ 'G': 'G',
     \ }
@@ -91,8 +85,8 @@ fu! toggle_settings#auto_open_fold(action) abort "{{{2
         if foldclosed('.') != -1
             norm! zvzz
         endif
-        let b:auto_open_fold_mappings = lg#map#save('n', 1, values(s:AOF_NOTATION2MOTION))
-        for notation in keys(s:AOF_NOTATION2MOTION)
+        let b:auto_open_fold_mappings = lg#map#save('n', 1, keys(s:AOF_LHS2NORM))
+        for lhs in keys(s:AOF_LHS2NORM)
             " Why do you open all folds with `zR`?{{{
             "
             " This is necessary when you scroll backward.
@@ -108,10 +102,18 @@ fu! toggle_settings#auto_open_fold(action) abort "{{{2
             " Same issue if you try to move backward while on the first line.
             " `silent!` makes sure that the whole sequence is processed no matter what.
             "}}}
+            " Why `substitute(...)`?{{{
+            "
+            " To prevent some keys from being translated by `:nno`.
+            " E.g., you don't want `<c-u>` to be translated into a literal `C-u`.
+            " Because when you  press the mapping, `C-u` would not  be passed to
+            " `s:move_and_open_fold()`;  instead, it  would  be  pressed on  the
+            " command-line.
+            "}}}
             exe printf(
             \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s)<cr>',
-            \ s:AOF_NOTATION2MOTION[notation],
-            \ string(notation),
+            \     lhs,
+            \     string(substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')),
             \ )
         endfor
     elseif a:action is# 'disable' && exists('b:auto_open_fold_mappings')
@@ -179,9 +181,10 @@ fu! toggle_settings#auto_open_fold(action) abort "{{{2
     "}}}
 endfu
 
-fu! s:move_and_open_fold(notation) abort
+fu! s:move_and_open_fold(lhs) abort
     let old_foldlevel = foldlevel('.')
-    if a:notation is# 'j'
+    let old_winline = winline()
+    if a:lhs is# 'j' || a:lhs is# '<down>'
         norm! gj
         if &ft is# 'markdown' && getline('.') =~# '^#\+$' | return | endif
         let is_in_a_closed_fold = foldclosed('.') != -1
@@ -189,27 +192,79 @@ fu! s:move_and_open_fold(notation) abort
         let level_changed = new_foldlevel != old_foldlevel
         " need to  check `level_changed` to handle  the case where we  move from
         " the end of a nested fold to the next line in the containing fold
-        if is_in_a_closed_fold || level_changed
+        if (is_in_a_closed_fold || level_changed) && s:does_not_distract_in_goyo()
             norm! zMzv
+            " Rationale:{{{
+            "
+            " I don't  mind the distance between  the cursor and the  top of the
+            " window changing unexpectedly after pressing `j` or `k`.
+            " In fact, the  way it changes now  lets us see a good  portion of a
+            " fold when we enter it, which I like.
+            "
+            " However, in goyo mode, it's distracting.
+            "}}}
+            if get(g:, 'in_goyo_mode', 0) | call s:fix_winline(old_winline, 'j') | endif
         endif
-    elseif a:notation is# 'k'
+    elseif a:lhs is# 'k' || a:lhs is# '<up>'
         norm! gk
         if &ft is# 'markdown' && getline('.') =~# '^#\+$' | return | endif
-        let moved_into_closed_fold = foldclosed('.') != -1
+        let is_in_a_closed_fold = foldclosed('.') != -1
         let new_foldlevel = foldlevel('.')
         let level_changed = new_foldlevel != old_foldlevel
         " need to  check `level_changed` to handle  the case where we  move from
         " the start of a nested fold to the previous line in the containing fold
-        if level_changed || moved_into_closed_fold
-            sil! norm! gjzRgkzMzv
-            "  │
+        if (is_in_a_closed_fold || level_changed) && s:does_not_distract_in_goyo()
+            sil! norm! gjzRkzMzv
+            "  │           │{{{
+            "  │           └ don't use `gk` (github issue 4969; fixed but not merged in Nvim)
             "  └ make sure all the keys are pressed, even if an error occurs
+            "}}}
+            if get(g:, 'in_goyo_mode', 0) | call s:fix_winline(old_winline, 'k') | endif
         endif
     else
         " We want to pass a count if we've pressed `123G`.
         " But we don't want any count if we've just pressed `G`.
         let cnt = v:count ? v:count : ''
-        sil! exe 'norm! zR'..cnt..s:AOF_NOTATION2MOTION[a:notation]..'zMzv'
+        sil! exe 'norm! zR'..cnt..s:AOF_LHS2NORM[a:lhs]..'zMzv'
+    endif
+endfu
+
+fu! s:does_not_distract_in_goyo() abort
+    " In goyo mode, opening a fold containing only a long comment is distracting.
+    " Because we only care about the code.
+    if ! get(g:, 'in_goyo_mode', 0) || &ft is# 'markdown'
+        return 1
+    endif
+    let cml = matchstr(get(split(&l:cms, '%s', 1), 0, ''), '\S*')
+    return getline('.') !~# '^\s*\V'..escape(cml, '\')..'\m.*\%({{\%x7b\|}}\%x7d\)$'
+endfu
+
+fu! s:fix_winline(old, dir) abort
+    let now = winline()
+    if a:dir is# 'k'
+        " getting one line closer from the top of the window is expected; nothing to fix
+        if now == a:old - 1 | return | endif
+        " if we were not at the top of the window before pressing `k`
+        if a:old > (&so + 1)
+            norm! zt
+            let new = (a:old - 1) - (&so + 1)
+            if new != 0 | exe 'norm! '..new.."\<c-y>" | endif
+        " a:old == (&so + 1)
+        else
+            norm! zt
+        endif
+    elseif a:dir is# 'j'
+        " getting one line closer from the bottom of the window is expected; nothing to fix
+        if now == a:old + 1 | return | endif
+        " if we were not at the bottom of the window before pressing `j`
+        if a:old < (winheight(0) - &so)
+            norm! zt
+            let new = (a:old + 1) - (&so + 1)
+            if new != 0 | exe 'norm! '..new.."\<c-y>" | endif
+        " a:old == (winheight(0) - &so)
+        else
+            norm! zb
+        endif
     endif
 endfu
 
@@ -229,13 +284,13 @@ fu! s:change_cursor_color(color) abort "{{{2
     " The general syntax to set an xterm parameter is:{{{
     "
     "         ESC ] Ps;Pt ST
-    "               └┤ └┤ └┤
-    "                │  │  └ \007; \0 = octal base (what's the meaning of ST?)
-    "                │  │
-    "                │  └ a text parameter composed of printable characters
-    "                │
-    "                └ a single (usually optional) numeric parameter,
-    "                  composed of one or more digits
+    "               ├┘ ├┘ ├┘
+    "               │  │  └ \007; \0 = octal base (what's the meaning of ST?)
+    "               │  │
+    "               │  └ a text parameter composed of printable characters
+    "               │
+    "               └ a single (usually optional) numeric parameter,
+    "                 composed of one or more digits
     "
     " http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#Definitions
     " http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#XTerm_Operating_System_Commands
@@ -358,12 +413,12 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
     " We are not interested in level 1.
     " The 3 other levels are enough. If I want to see:
     "
-    "     - everything = 0
+    "    - everything = 0
     "
-    "     - what is useful = 2
-    "       has a replacement character: `cchar`, {'conceal': 'x'}
+    "    - what is useful = 2
+    "      has a replacement character: `cchar`, {'conceal': 'x'}
     "
-    "     - nothing = 3
+    "    - nothing = 3
     if new_val ==# 1
         let new_val = a:is_fwd ? 2 : 0
     endif
@@ -516,13 +571,13 @@ fu! s:lightness(more, ...) abort "{{{2
         "
         " Let's simplify the pb, and cycle from 0 up to `p`. Solution:
         "
-        "     - initialize `n` to 0
-        "     - use the formula  (n+1)%(p+1)  to update `n`
-        "                         ├─┘ ├────┘
-        "                         │   └ but don't go above `p`
-        "                         │     read this as:  “p+1 is off-limit”
-        "                         │
-        "                         └ increment
+        "    - initialize `n` to 0
+        "    - use the formula  (n+1)%(p+1)  to update `n`
+        "                        ├─┘ ├────┘
+        "                        │   └ but don't go above `p`
+        "                        │     read this as:  “p+1 is off-limit”
+        "                        │
+        "                        └ increment
         "
         " To use this solution, we need to find a link between the problem we've
         " just solved and our original problem.
@@ -531,13 +586,14 @@ fu! s:lightness(more, ...) abort "{{{2
         "     the distance between `a` and `n`
         "
         " Updated_solution:
-        "                          before, it was `0`
-        "                          v
-        "     - initialize `n` to `a`
+        "                         before, it was `0`
+        "                         v
+        "    - initialize `n` to `a`
         "
-        "     - use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
-        "             ^                                           ^
-        "             before, it was `n`                          before, it was `0`
+        "    - use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
+        "            │                                          │
+        "            │                                          └ before, it was `0`
+        "            └ before, it was `n`
         "
         " Let's formalize the last sentence, using  `d1`, `d2`, `n1` and `n2` to
         " stand for the old / new distances and the old / new values of `n`:
