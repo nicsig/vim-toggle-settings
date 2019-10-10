@@ -536,7 +536,7 @@ fu! s:hl_yanked_text() abort "{{{2
         endif
 
         let id = matchadd('IncSearch', pat, 0, -1)
-        call timer_start(250, {-> exists('id') ? matchdelete(id) : ''})
+        call timer_start(250, {_ -> exists('id') ? matchdelete(id) : ''})
     catch
         return lg#catch_error()
     endtry
@@ -557,7 +557,7 @@ fu! s:lightness(more, ...) abort "{{{2
             let level = get(g:, 'seoul256_background', 237) - 233 + 1
         endif
 
-        call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
+        call timer_start(0, {_ -> execute('echo "[lightness]"'.level, '')})
         return
     endif
 
@@ -662,7 +662,7 @@ fu! s:lightness(more, ...) abort "{{{2
         let level = g:seoul256_background - 233 + 1
     endif
 
-    call timer_start(0, {-> execute('echo "[lightness]"'.level, '')})
+    call timer_start(0, {_ -> execute('echo "[lightness]"'.level, '')})
     return ''
 endfu
 
