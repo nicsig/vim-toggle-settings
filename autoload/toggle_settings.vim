@@ -61,7 +61,7 @@ let g:autoloaded_toggle_settings = 1
 
 " Init {{{1
 
-let s:AOF_LHS2NORM = {
+const s:AOF_LHS2NORM = {
     \ 'j': 'j',
     \ 'k': 'k',
     \ '<down>': "\<down>",
@@ -80,7 +80,7 @@ augroup hl_yanked_text
 augroup END
 
 " Functions {{{1
-fu! toggle_settings#auto_open_fold(action) abort "{{{2
+fu toggle_settings#auto_open_fold(action) abort "{{{2
     if a:action is# 'enable' && !exists('b:auto_open_fold_mappings')
         if foldclosed('.') != -1
             norm! zvzz
@@ -181,7 +181,7 @@ fu! toggle_settings#auto_open_fold(action) abort "{{{2
     "}}}
 endfu
 
-fu! s:move_and_open_fold(lhs) abort
+fu s:move_and_open_fold(lhs) abort
     let old_foldlevel = foldlevel('.')
     let old_winline = winline()
     if a:lhs is# 'j' || a:lhs is# '<down>'
@@ -229,7 +229,7 @@ fu! s:move_and_open_fold(lhs) abort
     endif
 endfu
 
-fu! s:does_not_distract_in_goyo() abort
+fu s:does_not_distract_in_goyo() abort
     " In goyo mode, opening a fold containing only a long comment is distracting.
     " Because we only care about the code.
     if ! get(g:, 'in_goyo_mode', 0) || &ft is# 'markdown'
@@ -239,7 +239,7 @@ fu! s:does_not_distract_in_goyo() abort
     return getline('.') !~# '^\s*\V'..escape(cml, '\')..'\m.*\%({{\%x7b\|}}\%x7d\)$'
 endfu
 
-fu! s:fix_winline(old, dir) abort
+fu s:fix_winline(old, dir) abort
     let now = winline()
     if a:dir is# 'k'
         " getting one line closer from the top of the window is expected; nothing to fix
@@ -268,7 +268,7 @@ fu! s:fix_winline(old, dir) abort
     endif
 endfu
 
-fu! s:change_cursor_color(color) abort "{{{2
+fu s:change_cursor_color(color) abort "{{{2
     " Why?{{{
     "
     " We're going to execute a `printf` command, via `:!`.
@@ -331,7 +331,7 @@ fu! s:change_cursor_color(color) abort "{{{2
     exe 'sil !printf '.string(seq)
 endfu
 
-fu! s:colorscheme(is_light) abort "{{{2
+fu s:colorscheme(is_light) abort "{{{2
     if a:is_light
         colo seoul256-light
         call s:cursorline(0)
@@ -388,7 +388,7 @@ fu! s:colorscheme(is_light) abort "{{{2
     endif
 endfu
 
-fu! s:conceallevel(is_fwd, ...) abort "{{{2
+fu s:conceallevel(is_fwd, ...) abort "{{{2
     if a:0
         " Why toggling between `0` and `2`, instead of `0` and `3` like everywhere else?{{{
         "
@@ -427,7 +427,7 @@ fu! s:conceallevel(is_fwd, ...) abort "{{{2
     echo '[conceallevel] '.&l:cole
 endfu
 
-fu! s:cursorline(enable) abort "{{{2
+fu s:cursorline(enable) abort "{{{2
     " If we're in goyo mode, we only want to toggle 'cul' in the current window.
     " Otherwise, when leaving the mode, the state of 'cul' in the current window
     " and in the other ones can be unexpected.
@@ -456,14 +456,18 @@ fu! s:cursorline(enable) abort "{{{2
     endif
 endfu
 
-fu! s:edit_help_file(allow) "{{{2
+fu s:edit_help_file(allow) "{{{2
     if &ft isnot# 'help'
         return
     endif
     if a:allow && !empty(maparg('q', 'n', 0, 1))
         nno  <buffer><nowait><silent>  <cr>  80<bar>
 
-        let keys = ['p', 'q' , 'u']
+        let keys =<< trim END
+            p
+            q
+            u
+        END
         for a_key in keys
             exe 'sil unmap <buffer> '.a_key
         endfor
@@ -483,7 +487,7 @@ fu! s:edit_help_file(allow) "{{{2
     endif
 endfu
 
-fu! s:formatprg(scope) abort "{{{2
+fu s:formatprg(scope) abort "{{{2
     if a:scope is# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
         if !exists('s:local_fp_save')
             let s:local_fp_save = {}
@@ -510,7 +514,7 @@ fu! s:formatprg(scope) abort "{{{2
     echo '[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)
 endfu
 
-fu! s:hl_yanked_text() abort "{{{2
+fu s:hl_yanked_text() abort "{{{2
     try
         "  ┌ don't highlight anything if we didn't copy anything
         "  │
@@ -542,7 +546,7 @@ fu! s:hl_yanked_text() abort "{{{2
     endtry
 endfu
 
-fu! s:lightness(more, ...) abort "{{{2
+fu s:lightness(more, ...) abort "{{{2
     " toggle between 2 predefined levels of lightness
     if a:0
         if &bg is# 'light'
@@ -666,7 +670,7 @@ fu! s:lightness(more, ...) abort "{{{2
     return ''
 endfu
 
-fu! s:matchparen(enable) abort "{{{2
+fu s:matchparen(enable) abort "{{{2
     if empty(globpath(&rtp, 'plugin/matchparen_toggle.vim', 0, 1, 1))
         echo printf('no  %s  file was found in the runtimepath', 'plugin/matchparen.vim')
         return
@@ -679,13 +683,13 @@ fu! s:matchparen(enable) abort "{{{2
     echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
 endfu
 
-fu! s:showbreak(enable) abort "{{{2
+fu s:showbreak(enable) abort "{{{2
     let &showbreak = a:enable ? '↪' : ''
     " Used in the autocmd `my_showbreak` in vimrc to (re)set `'showbreak'`.
     let b:showbreak = a:enable
 endfu
 
-fu! s:stl_list_position(is_fwd, ...) abort "{{{2
+fu s:stl_list_position(is_fwd, ...) abort "{{{2
     if a:0
         let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == 0
                                  \ ?     (empty(getqflist()) ? 2 : 1)
@@ -702,7 +706,7 @@ fu! s:stl_list_position(is_fwd, ...) abort "{{{2
     redraws
 endfu
 
-fu! s:toggle_hl_yanked_text(action) abort "{{{2
+fu s:toggle_hl_yanked_text(action) abort "{{{2
     if a:action is# 'is_active'
         return exists('s:hl_yanked_text')
     elseif a:action is# 'enable' && !exists('s:hl_yanked_text')
@@ -712,7 +716,7 @@ fu! s:toggle_hl_yanked_text(action) abort "{{{2
     endif
 endfu
 
-fu! s:toggle_settings(...) abort "{{{2
+fu s:toggle_settings(...) abort "{{{2
     if a:0 == 7
         let [label, letter, cmd1, cmd2, msg1, msg2, test] = a:000
         let msg1 = '['.label.'] '.msg1
@@ -766,12 +770,12 @@ fu! s:toggle_settings(...) abort "{{{2
     exe 'nno  <silent><unique>  co'.letter.'  :<c-u>'.rhs3.'<cr>'
 endfu
 
-fu! s:verbose_errors(enable) abort "{{{2
+fu s:verbose_errors(enable) abort "{{{2
     let g:my_verbose_errors = a:enable ? 1 : 0
     echo '[verbose errors] '.(g:my_verbose_errors ? 'ON' : 'OFF')
 endfu
 
-fu! s:virtualedit(action) abort "{{{2
+fu s:virtualedit(action) abort "{{{2
     if a:action is# 'is_all'
         return exists('s:ve_save')
     elseif a:action is# 'enable' && !exists('s:ve_save')
@@ -858,7 +862,7 @@ call s:toggle_settings('cursorline',
 "
 "     nno <silent> con :<c-u>call <sid>numbers()<cr>
 "
-"     fu! s:numbers() abort
+"     fu s:numbers() abort
 "         " The key '01' (state) is not necessary because no command in the dictionary
 "         " brings us to it.
 "         " However, if we got in this state by accident, hitting the mapping would raise
