@@ -434,7 +434,31 @@ fu s:cursorline(enable) abort "{{{2
     if get(g:, 'in_goyo_mode', 0) | setl cul! | return | endif
     " 'cursorline' only in the active window and not in insert mode.
     if a:enable
-        setl cursorline
+        setl cul
+        " What does this do?{{{
+        "
+        " When the cursor is on a long soft-wrapped line, and we enable `'cul'`,
+        " we want  only the  current *screen*  line to  be highlighted,  not the
+        " whole *text* line.
+        "}}}
+        " Warning: it can add a lot of latency, even if `'cul'` is not set.{{{
+        "
+        " So, do not include `screenline` in `'culopt'` unconditionally.
+        " Only do it when `'cul'` is set;  it doesn't make sense to customize it
+        " when `'cul'` is reset anyway.
+        "
+        " Setting `'cul'` can also increase the latency.
+        "
+        " See: https://github.com/vim/vim/issues/5079
+        "
+        "     $ vim -Nu NONE +'set ft=vim|setl noro|syn enable|/readline#yank' +'setl culopt=screenline' <(curl -s https://raw.githubusercontent.com/lacygoill/vim-readline/master/autoload/readline.vim)
+        "     " press `o` to open a new line
+        "     " insert `th`
+        "     " maintain `C-n` pressed for a few seconds,
+        "     " and observe how you keep cycling in the pum even after you stop pressing `C-n`
+        "}}}
+        let s:culopt_save = &l:culopt
+        let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
         augroup my_cursorline
             au!
             " Why `BufWinEnter` and `BufWinLeave`?{{{
@@ -444,15 +468,15 @@ fu s:cursorline(enable) abort "{{{2
             " It may happen, for example, when  you move in the quickfix list by
             " pressing `]q`.
             "}}}
-            au VimEnter,BufWinEnter,WinEnter * setl cursorline
-            au BufWinLeave,WinLeave          * setl nocursorline
-            au InsertEnter                   * setl nocursorline
-            au InsertLeave                   * setl cursorline
+            au VimEnter,BufWinEnter,WinEnter * setl cul   | let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
+            au BufWinLeave,WinLeave          * setl nocul | let &l:culopt = has('nvim') ? &l:culopt : s:culopt_save
+            au InsertEnter                   * setl nocul | let &l:culopt = has('nvim') ? &l:culopt : s:culopt_save
+            au InsertLeave                   * setl cul   | let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
         augroup END
     else
         sil! au! my_cursorline
         sil! aug! my_cursorline
-        setl nocursorline
+        setl nocul
     endif
 endfu
 
@@ -461,12 +485,12 @@ fu s:edit_help_file(allow) "{{{2
         return
     endif
     if a:allow && !empty(maparg('q', 'n', 0, 1))
-        nno  <buffer><nowait><silent>  <cr>  80<bar>
+        nno <buffer><nowait><silent> <cr> 80<bar>
 
         let keys =<< trim END
-            p
-            q
-            u
+        p
+        q
+        u
         END
         for a_key in keys
             exe 'sil unmap <buffer> '.a_key
