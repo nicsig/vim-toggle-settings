@@ -488,9 +488,9 @@ fu s:edit_help_file(allow) "{{{2
         nno <buffer><nowait><silent> <cr> 80<bar>
 
         let keys =<< trim END
-        p
-        q
-        u
+            p
+            q
+            u
         END
         for a_key in keys
             exe 'sil unmap <buffer> '.a_key
