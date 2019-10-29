@@ -181,6 +181,19 @@ fu toggle_settings#auto_open_fold(action) abort "{{{2
     "}}}
 endfu
 
+" Warning: Folds won't be opened/closed if the next line is in a new fold which is not closed.{{{
+"
+" This is because  we run `norm! zMzv`  iff the foldlevel has changed,  or if we
+" get on a line in a closed fold.
+"}}}
+" Why don't you fix this?{{{
+"
+" Not sure how to fix this.
+" Besides, I kinda like the current behavior.
+" If you press `zR`, you can move with `j`/`k` in the buffer without folds being closed.
+" If you press `zM`, folds are opened/closed automatically again.
+" This gives you a little more control about this feature.
+"}}}
 fu s:move_and_open_fold(lhs) abort
     let old_foldlevel = foldlevel('.')
     let old_winline = winline()
@@ -236,7 +249,9 @@ fu s:does_not_distract_in_goyo() abort
         return 1
     endif
     let cml = matchstr(get(split(&l:cms, '%s', 1), 0, ''), '\S*')
-    return getline('.') !~# '^\s*\V'..escape(cml, '\')..'\m.*\%({{\%x7b\|}}\%x7d\)$'
+    " note that we allow opening numbered folds (because usually those can contain code)
+    let fmr = '\%('..join(split(&l:fmr, ','), '\|')..'\)'
+    return getline('.') !~# '^\s*\V'..escape(cml, '\')..'\m.*'..fmr..'$'
 endfu
 
 fu s:fix_winline(old, dir) abort
@@ -440,22 +455,6 @@ fu s:cursorline(enable) abort "{{{2
         " When the cursor is on a long soft-wrapped line, and we enable `'cul'`,
         " we want  only the  current *screen*  line to  be highlighted,  not the
         " whole *text* line.
-        "}}}
-        " Warning: it can add a lot of latency, even if `'cul'` is not set.{{{
-        "
-        " So, do not include `screenline` in `'culopt'` unconditionally.
-        " Only do it when `'cul'` is set;  it doesn't make sense to customize it
-        " when `'cul'` is reset anyway.
-        "
-        " Setting `'cul'` can also increase the latency.
-        "
-        " See: https://github.com/vim/vim/issues/5079
-        "
-        "     $ vim -Nu NONE +'set ft=vim|setl noro|syn enable|/readline#yank' +'setl culopt=screenline' <(curl -s https://raw.githubusercontent.com/lacygoill/vim-readline/master/autoload/readline.vim)
-        "     " press `o` to open a new line
-        "     " insert `th`
-        "     " maintain `C-n` pressed for a few seconds,
-        "     " and observe how you keep cycling in the pum even after you stop pressing `C-n`
         "}}}
         let s:culopt_save = &l:culopt
         let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
