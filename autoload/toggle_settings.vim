@@ -845,6 +845,12 @@ call s:toggle_settings('stl_list_position',
 
 " 5 {{{2
 
+call s:toggle_settings('iwhiteall',
+\                      '<space>',
+\                      'set diffopt+=iwhiteall',
+\                      'set diffopt-=iwhiteall',
+\                      '&diffopt =~# "iwhiteall"')
+
 call s:toggle_settings('colorscheme',
 \                      'C',
 \                      'call <sid>colorscheme(1)',
