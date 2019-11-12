@@ -325,7 +325,7 @@ fu s:change_cursor_color(color) abort "{{{2
     "
     "     call writefile([seq], '/dev/tty', 'b')
     "}}}
-    let seq = "\033]12;".color."\007"
+    let seq = "\033]12;"..color.."\007"
 
     " FIXME: Doesn't work in Neovim. I think you need to set `'gcr'` instead.
 
@@ -343,7 +343,7 @@ fu s:change_cursor_color(color) abort "{{{2
     "     :call writefile(["\033]12;3\007"], '/dev/tty', 'b')
     "     E482: Can't create file /dev/tty~
     "}}}
-    exe 'sil !printf '.string(seq)
+    exe 'sil !printf '..string(seq)
 endfu
 
 fu s:colorscheme(is_light) abort "{{{2
@@ -417,7 +417,7 @@ fu s:conceallevel(is_fwd, ...) abort "{{{2
         else
             let &l:cole = &l:cole == a:1 ? a:2 : a:1
         endif
-        echo '[conceallevel] '.&l:cole
+        echo '[conceallevel] '..&l:cole
         return
     endif
 
@@ -439,7 +439,7 @@ fu s:conceallevel(is_fwd, ...) abort "{{{2
     endif
 
     let &l:cole = new_val
-    echo '[conceallevel] '.&l:cole
+    echo '[conceallevel] '..&l:cole
 endfu
 
 fu s:cursorline(enable) abort "{{{2
@@ -492,10 +492,10 @@ fu s:edit_help_file(allow) "{{{2
             u
         END
         for a_key in keys
-            exe 'sil unmap <buffer> '.a_key
+            exe 'sil unmap <buffer> '..a_key
         endfor
 
-        for pat in map(keys, {_,v ->  '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'.v."'"})
+        for pat in map(keys, {_,v ->  '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'..v.."'"})
             let b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
         endfor
 
@@ -534,7 +534,7 @@ fu s:formatprg(scope) abort "{{{2
         let &l:fp = get(s:local_fp_save, bufnr('%'), &l:fp)
         unlet! s:local_fp_save[bufnr('%')]
     endif
-    echo '[formatprg] '.(!empty(&l:fp) ? &l:fp : &g:fp)
+    echo '[formatprg] '..(!empty(&l:fp) ? &l:fp : &g:fp)
 endfu
 
 fu s:hl_yanked_text() abort "{{{2
@@ -553,13 +553,13 @@ fu s:hl_yanked_text() abort "{{{2
         let type = v:event.regtype
         if type is# 'v'
             let text = join(v:event.regcontents, "\n")
-            let pat = '\%'.line('.').'l\%'.virtcol('.').'v\_.\{'.strchars(text, 1).'}'
+            let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
         elseif type is# 'V'
-            let pat = '\%'.line('.').'l\_.*\%'.(line('.')+len(text)-1).'l'
-        elseif type =~# "\<c-v>".'\d\+'
-            let width = matchstr(type, "\<c-v>".'\zs\d\+')
+            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
+        elseif type =~# "\<c-v>"..'\d\+'
+            let width = matchstr(type, "\<c-v>"..'\zs\d\+')
             let [line, vcol] = [line('.'), virtcol('.')]
-            let pat = join(map(text, {i -> '\%'.(line+i).'l\%'.vcol.'v.\{'.width.'}'}), '\|')
+            let pat = join(map(text, {i -> '\%'..(line+i)..'l\%'..vcol..'v.\{'..width..'}'}), '\|')
         endif
 
         let id = matchadd('IncSearch', pat, 0, -1)
@@ -584,7 +584,7 @@ fu s:lightness(more, ...) abort "{{{2
             let level = get(g:, 'seoul256_background', 237) - 233 + 1
         endif
 
-        call timer_start(0, {_ -> execute('echo "[lightness]"'.level, '')})
+        call timer_start(0, {_ -> execute('echo "[lightness]"'..level, '')})
         return
     endif
 
@@ -689,7 +689,7 @@ fu s:lightness(more, ...) abort "{{{2
         let level = g:seoul256_background - 233 + 1
     endif
 
-    call timer_start(0, {_ -> execute('echo "[lightness]"'.level, '')})
+    call timer_start(0, {_ -> execute('echo "[lightness]"'..level, '')})
     return ''
 endfu
 
@@ -698,12 +698,11 @@ fu s:matchparen(enable) abort "{{{2
         echo printf('no  %s  file was found in the runtimepath', 'plugin/matchparen.vim')
         return
     endif
-    let cur_win = winnr()
-    if a:enable && !exists('g:loaded_matchparen') || !a:enable && exists('g:loaded_matchparen')
+    if a:enable && !exists('#matchup_matchparen#CursorMoved')
+       \ || !a:enable && exists('#matchup_matchparen#CursorMoved')
         runtime! plugin/matchparen_toggle.vim
     endif
-    exe cur_win.'wincmd w'
-    echo '[matchparen] '.(exists('g:loaded_matchparen') ? 'ON' : 'OFF')
+    echo '[matchparen] '..(exists('#matchup_matchparen#CursorMoved') ? 'ON' : 'OFF')
 endfu
 
 fu s:showbreak(enable) abort "{{{2
@@ -742,29 +741,29 @@ endfu
 fu s:toggle_settings(...) abort "{{{2
     if a:0 == 7
         let [label, letter, cmd1, cmd2, msg1, msg2, test] = a:000
-        let msg1 = '['.label.'] '.msg1
-        let msg2 = '['.label.'] '.msg2
+        let msg1 = '['..label..'] '..msg1
+        let msg2 = '['..label..'] '..msg2
 
     elseif a:0 == 5
         let [label, letter, cmd1, cmd2, test] = a:000
 
-        let rhs3 = '     if '.test
-            \ .'<bar>    exe '.string(cmd2)
-            \ .'<bar>else'
-            \ .'<bar>    exe '.string(cmd1)
-            \ .'<bar>endif'
+        let rhs3 = '     if '..test
+            \ ..'<bar>    exe '..string(cmd2)
+            \ ..'<bar>else'
+            \ ..'<bar>    exe '..string(cmd1)
+            \ ..'<bar>endif'
 
-        exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>'.cmd1.'<cr>'
-        exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>'.cmd2.'<cr>'
-        exe 'nno  <silent><unique>  co'.letter.'  :<c-u>'.rhs3.'<cr>'
+        exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>'..cmd1..'<cr>'
+        exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>'..cmd2..'<cr>'
+        exe 'nno  <silent><unique>  co'..letter..'  :<c-u>'..rhs3..'<cr>'
 
         return
 
     elseif a:0 == 3
         let [a_func, letter, values] = [a:1, a:2, eval(a:3)]
-        exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>call <sid>'.a_func.'(0)<cr>'
-        exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>call <sid>'.a_func.'(1)<cr>'
-        exe 'nno  <silent><unique>  co'.letter.'  :<c-u>call <sid>'.a_func.'(0,'.values[0].','.values[1].')<cr>'
+        exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>call <sid>'..a_func..'(0)<cr>'
+        exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>call <sid>'..a_func..'(1)<cr>'
+        exe 'nno  <silent><unique>  co'..letter..'  :<c-u>call <sid>'..a_func..'(0,'..values[0]..','..values[1]..')<cr>'
 
         return
 
@@ -772,30 +771,30 @@ fu s:toggle_settings(...) abort "{{{2
         let [label, letter, cmd1, cmd2, msg1, msg2, test] = [
             \ a:1,
             \ a:2,
-            \ 'setl '.a:1,
-            \ 'setl no'.a:1,
-            \ '['.a:1.'] ON',
-            \ '['.a:1.'] OFF',
-            \ '&l:'.a:1,
+            \ 'setl '..a:1,
+            \ 'setl no'..a:1,
+            \ '['..a:1..'] ON',
+            \ '['..a:1..'] OFF',
+            \ '&l:'..a:1,
             \ ]
     else
         return
     endif
 
-    let rhs3 =  '     if '.test
-    \          .'<bar>    exe '.string(cmd2).'<bar>echo '.string(msg2)
-    \          .'<bar>else'
-    \          .'<bar>    exe '.string(cmd1).'<bar>echo '.string(msg1)
-    \          .'<bar>endif'
+    let rhs3 =  'if '..test
+        \ ..'<bar>    exe '..string(cmd2)..'<bar>echo '..string(msg2)
+        \ ..'<bar>else'
+        \ ..'<bar>    exe '..string(cmd1)..'<bar>echo '..string(msg1)
+        \ ..'<bar>endif'
 
-    exe 'nno  <silent><unique>  [o'.letter.'  :<c-u>'.cmd1.'<bar>echo '.string(msg1).'<cr>'
-    exe 'nno  <silent><unique>  ]o'.letter.'  :<c-u>'.cmd2.'<bar>echo '.string(msg2).'<cr>'
-    exe 'nno  <silent><unique>  co'.letter.'  :<c-u>'.rhs3.'<cr>'
+    exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>'..cmd1..'<bar>echo '..string(msg1)..'<cr>'
+    exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>'..cmd2..'<bar>echo '..string(msg2)..'<cr>'
+    exe 'nno  <silent><unique>  co'..letter..'  :<c-u>'..rhs3..'<cr>'
 endfu
 
 fu s:verbose_errors(enable) abort "{{{2
     let g:my_verbose_errors = a:enable ? 1 : 0
-    echo '[verbose errors] '.(g:my_verbose_errors ? 'ON' : 'OFF')
+    echo '[verbose errors] '..(g:my_verbose_errors ? 'ON' : 'OFF')
 endfu
 
 fu s:virtualedit(action) abort "{{{2
@@ -916,7 +915,7 @@ call s:toggle_settings('MatchParen',
 \                      'p',
 \                      'call <sid>matchparen(1)',
 \                      'call <sid>matchparen(0)',
-\                      'exists("g:loaded_matchparen")')
+\                      'exists("#matchup_matchparen#CursorMoved")')
 
 " `gq` is  currently used  to format comments,  but it would  also be  useful to
 " execute formatting tools such as js-beautify.
