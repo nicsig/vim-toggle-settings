@@ -694,15 +694,15 @@ fu s:lightness(more, ...) abort "{{{2
 endfu
 
 fu s:matchparen(enable) abort "{{{2
-    if empty(globpath(&rtp, 'plugin/matchparen_toggle.vim', 0, 1, 1))
-        echo printf('no  %s  file was found in the runtimepath', 'plugin/matchparen.vim')
+    if empty(globpath(&rtp, 'macros/matchparen_toggle.vim', 0, 1, 1))
+        echo printf('no  %s  file was found in the runtimepath', 'macros/matchparen.vim')
         return
     endif
-    if a:enable && !exists('#matchup_matchparen#CursorMoved')
-       \ || !a:enable && exists('#matchup_matchparen#CursorMoved')
-        runtime! plugin/matchparen_toggle.vim
+    if a:enable && ! g:matchup_matchparen_enabled
+       \ || ! a:enable && g:matchup_matchparen_enabled
+        runtime! macros/matchparen_toggle.vim
     endif
-    echo '[matchparen] '..(exists('#matchup_matchparen#CursorMoved') ? 'ON' : 'OFF')
+    echo '[matchparen] '..(g:matchup_matchparen_enabled ? 'ON' : 'OFF')
 endfu
 
 fu s:showbreak(enable) abort "{{{2
