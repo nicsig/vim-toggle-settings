@@ -456,8 +456,10 @@ fu s:cursorline(enable) abort "{{{2
         " we want  only the  current *screen*  line to  be highlighted,  not the
         " whole *text* line.
         "}}}
-        let s:culopt_save = &l:culopt
-        let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
+        if !has('nvim')
+            let s:culopt_save = &l:culopt
+            let &l:culopt = 'screenline'
+        endif
         augroup my_cursorline
             au!
             " Why `BufWinEnter` and `BufWinLeave`?{{{
@@ -467,10 +469,10 @@ fu s:cursorline(enable) abort "{{{2
             " It may happen, for example, when  you move in the quickfix list by
             " pressing `]q`.
             "}}}
-            au VimEnter,BufWinEnter,WinEnter * setl cul   | let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
-            au BufWinLeave,WinLeave          * setl nocul | let &l:culopt = has('nvim') ? &l:culopt : s:culopt_save
-            au InsertEnter                   * setl nocul | let &l:culopt = has('nvim') ? &l:culopt : s:culopt_save
-            au InsertLeave                   * setl cul   | let &l:culopt = has('nvim') ? &l:culopt : 'screenline'
+            au VimEnter,BufWinEnter,WinEnter * setl cul   | if !has('nvim') | let &l:culopt = 'screenline' | endif
+            au BufWinLeave,WinLeave          * setl nocul | if !has('nvim') | let &l:culopt = s:culopt_save | endif
+            au InsertEnter                   * setl nocul | if !has('nvim') | let &l:culopt = s:culopt_save | endif
+            au InsertLeave                   * setl cul   | if !has('nvim') | let &l:culopt = 'screenline' | endif
         augroup END
     else
         sil! au! my_cursorline
@@ -824,9 +826,8 @@ call s:toggle_settings('wrap'          , 'w')
 
 " 3 {{{2
 
-" Do *not* use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('lightness',
-\                      'L',
+\                      'l',
 \                      '[253, 256]' )
 
 call s:toggle_settings('conceallevel',
@@ -875,8 +876,9 @@ call s:toggle_settings('diff',
 \                      'diffoff',
 \                      '&l:diff')
 
+" Do *not* use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('cursorline',
-\                      'l',
+\                      'L',
 \                      'call <sid>cursorline(1)',
 \                      'call <sid>cursorline(0)',
 \                      'exists("#my_cursorline")')
