@@ -12,9 +12,9 @@ let g:autoloaded_toggle_settings = 1
 " It  can also  be used  for (accidental)  repeated activation,  or (accidental)
 " repeated disactivation.
 "
-" If the function doesn't save/restore a  state using a custom variable, there's
-" no issue (ex: `s:cursorline()`).  But  if it does (ex: `s:virtualedit()`), and
-" you don't handle repeated (dis)activations, it can lead to errors.
+" There is no issue if the function  doesn't save/restore a state using a custom
+" variable (ex: `#cursorline()`).   But if it does  (ex: `s:virtualedit()`), but
+" doesn't handle repeated (dis)activations, it can lead to errors.
 "
 " For example,  if you transit to  the same state  twice, the 1st time,  it will
 " work as expected: the  function will save the original state,  A, then put you
@@ -22,7 +22,7 @@ let g:autoloaded_toggle_settings = 1
 " But the 2nd time, the function will blindly save B, as if it was A.
 " So, when you will invoke it to restore A, you will, in effect, restore B.
 "}}}
-" What should you avoid?{{{
+"   Ok, but concretely, what should I avoid?{{{
 "
 " NEVER write this:
 "
@@ -49,7 +49,7 @@ let g:autoloaded_toggle_settings = 1
 "             ...
 "         endif
 "}}}
-" Which functions are concerned?{{{
+"   Which functions are concerned?{{{
 "
 " All functions make  you transit to a new known  state (are there exceptions?).
 " But  some of  them do  it  from a  known state,  while  others do  it from  an
@@ -283,123 +283,11 @@ fu s:fix_winline(old, dir) abort
     endif
 endfu
 
-fu s:change_cursor_color(color) abort "{{{2
-    " Why?{{{
-    "
-    " We're going to execute a `printf` command, via `:!`.
-    "
-    " It may contain a `#` character (prefix in hex code).
-    " On Vim's command-line, this character is automatically expanded
-    " in the name of the alternate file.
-    "
-    " We don't want that.
-    "}}}
-    let color = escape(a:color, '#')
-
-    " The general syntax to set an xterm parameter is:{{{
-    "
-    "         ESC ] Ps;Pt ST
-    "               ├┘ ├┘ ├┘
-    "               │  │  └ \007; \0 = octal base (what's the meaning of ST?)
-    "               │  │
-    "               │  └ a text parameter composed of printable characters
-    "               │
-    "               └ a single (usually optional) numeric parameter,
-    "                 composed of one or more digits
-    "
-    " http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#Definitions
-    " http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.7.pod#XTerm_Operating_System_Commands
-    "
-    " Here, we want to set the color of the cursor to #373b41.
-    " The latter must take the place  of the `Pt` parameter (the color could
-    " be a  name instead of a  hex number, so  it fits the description  of a
-    " TEXT parameter):
-    "
-    "         → Ps = 12
-    "           Change colour of text cursor foreground to Pt
-    "}}}
-    " Do I need double quotes?{{{
-    "
-    " You don't need them if you send the sequence to the terminal via `printf`.
-    " You *do* need them, if you send the sequence via `writefile()`:
-    "
-    "     call writefile([seq], '/dev/tty', 'b')
-    "}}}
-    let seq = "\033]12;"..color.."\007"
-
-    " FIXME: Doesn't work in Neovim. I think you need to set `'gcr'` instead.
-
-    " FIXME: The color of the cusor is changed for all tmux panes.
-    " It should only affect the current tmux pane.
-
-    " FIXME: After changing the colorscheme, the cursor quickly blinks at random moments.
-    " It's subtle but distracting.
-    " I think it's because of this sequence...
-    " Why don't you use `writefile()` to send the sequence to the terminal?{{{
-    "
-    " It wouldn't work in gVim:
-    "
-    "     $ gvim
-    "     :call writefile(["\033]12;3\007"], '/dev/tty', 'b')
-    "     E482: Can't create file /dev/tty~
-    "}}}
-    exe 'sil !printf '..string(seq)
-endfu
-
 fu s:colorscheme(is_light) abort "{{{2
     if a:is_light
         colo seoul256-light
-        call s:cursorline(0)
-        " In the past we used `#373b41`.{{{
-        "
-        " But for  some reason, the  st terminal doesn't support  hexcodes (even
-        " after patching it to support the OSC12 sequence):
-        "
-        "     $ printf '\033]12;#9a7372\007'
-        "
-        " The command produces some black color, regardless of the hexcode.
-        " It does support a decimal code though, so we use that now.
-        "}}}
-        " Why do you limit yourself to colors below 15?{{{
-        "
-        " Urxvt doesn't support the colors beyond that:
-        "
-        "     # start urxvt from another terminal
-        "
-        "     $ printf '\033]12;123\007'
-        "
-        "     # quit urxvt
-        "     urxvt: unable to parse color '123', using pink instead.~
-        "}}}
-        " FIXME: Our current xterm doesn't support decimal codes, only hexcodes.
-        " Update: What about `rgb:12/34/56`?
-        call s:change_cursor_color('0')
     else
-        " Why unletting `g:seoul256_background`?{{{
-        "
-        " When Vim starts, we call `colorscheme#set()` from our vimrc.
-        " This function is defined in `~/.vim/autoload/colorscheme.vim`.
-        " It manually set `g:seoul256_background` to choose a custom lightness.
-        "
-        " When   we    change   the    colorscheme,   from   light    to   dark,
-        " `g:seoul256_background` has a value which will be interpreted as the
-        " desire to set a light colorscheme:
-        "
-        "         ~/.vim/plugged/seoul256.vim/colors/seoul256.vim
-        "
-        " This is not what we want.
-        " We want a dark one.
-        " So, we  must make sure the  variable is deleted before  trying to load
-        " the dark colorscheme.
-        "}}}
-        unlet! g:seoul256_background
         colo seoul256
-        " We  enable 'cul'  in  a  dark colorscheme,  but  it  can be  extremely
-        " cpu-consuming when  you move  horizontally (j,  k, w,  b, e,  ...) and
-        " 'showcmd' is enabled.
-        call s:cursorline(1)
-        " In the past we used `#9a7372`.
-        call s:change_cursor_color('3')
     endif
 endfu
 
@@ -440,45 +328,6 @@ fu s:conceallevel(is_fwd, ...) abort "{{{2
 
     let &l:cole = new_val
     echo '[conceallevel] '..&l:cole
-endfu
-
-fu s:cursorline(enable) abort "{{{2
-    " If we're in goyo mode, we only want to toggle 'cul' in the current window.
-    " Otherwise, when leaving the mode, the state of 'cul' in the current window
-    " and in the other ones can be unexpected.
-    if get(g:, 'in_goyo_mode', 0) | setl cul! | return | endif
-    " 'cursorline' only in the active window and not in insert mode.
-    if a:enable
-        setl cul
-        " What does this do?{{{
-        "
-        " When the cursor is on a long soft-wrapped line, and we enable `'cul'`,
-        " we want  only the  current *screen*  line to  be highlighted,  not the
-        " whole *text* line.
-        "}}}
-        if !has('nvim')
-            let s:culopt_save = &l:culopt
-            let &l:culopt = 'screenline'
-        endif
-        augroup my_cursorline
-            au!
-            " Why `BufWinEnter` and `BufWinLeave`?{{{
-            "
-            " If you load  another buffer in the current  window, `WinLeave` and
-            " `WinEnter` are not fired.
-            " It may happen, for example, when  you move in the quickfix list by
-            " pressing `]q`.
-            "}}}
-            au VimEnter,BufWinEnter,WinEnter * setl cul   | if !has('nvim') | let &l:culopt = 'screenline' | endif
-            au BufWinLeave,WinLeave          * setl nocul | if !has('nvim') | let &l:culopt = s:culopt_save | endif
-            au InsertEnter                   * setl nocul | if !has('nvim') | let &l:culopt = s:culopt_save | endif
-            au InsertLeave                   * setl cul   | if !has('nvim') | let &l:culopt = 'screenline' | endif
-        augroup END
-    else
-        sil! au! my_cursorline
-        sil! aug! my_cursorline
-        setl nocul
-    endif
 endfu
 
 fu s:edit_help_file(allow) "{{{2
@@ -576,9 +425,9 @@ fu s:lightness(more, ...) abort "{{{2
     if a:0
         if &bg is# 'light'
             let g:seoul256_light_background =
-                \ get(g:, 'seoul256_light_background', 253) == a:1 ? a:2 : a:1
+                \ get(g:, 'seoul256_light_background', g:seoul256_default_lightness) == a:1 ? a:2 : a:1
             colo seoul256-light
-            let level = get(g:, 'seoul256_light_background', 253) - 252 + 1
+            let level = get(g:, 'seoul256_light_background', g:seoul256_default_lightness) - 252 + 1
         else
             let g:seoul256_background =
                 \ get(g:, 'seoul256_background', 237) == 233 ? 237 : 233
@@ -610,19 +459,17 @@ fu s:lightness(more, ...) abort "{{{2
         "
         " To use this solution, we need to find a link between the problem we've
         " just solved and our original problem.
-        " In the latter, what cycles between 0 and `p`?
+        " In the latter, what cycles between 0 and `p`?: the distance between `a` and `n`.
         "
-        "     the distance between `a` and `n`
-        "
-        " Updated_solution:
-        "                         before, it was `0`
-        "                         v
+        " Updated Solution:
+        "                      before, it was `0`
+        "                      v
         "    - initialize `n` to `a`
         "
-        "    - use  (d+1)%(p+1)  to update the DISTANCE between `a` and `n`
-        "            │                                          │
-        "            │                                          └ before, it was `0`
-        "            └ before, it was `n`
+        "    - use `(d+1)%(p+1)` to update the DISTANCE between `a` and `n`
+        "           │                                         │
+        "           │                                         └ before, it was `0`
+        "           └ before, it was `n`
         "
         " Let's formalize the last sentence, using  `d1`, `d2`, `n1` and `n2` to
         " stand for the old / new distances and the old / new values of `n`:
@@ -634,7 +481,7 @@ fu s:lightness(more, ...) abort "{{{2
         "                  ├────────────────┐
         "     ⇔ n2       = (n1-a +1)%(p+1) +a
         "                   ├─────┘ ├────┘ ├┘
-        "                   │       │      └ we want the distance from 0, not from `a`, so add `a`
+        "                   │       │      └ we want the distance from 0, not from `a`; so add `a`
         "                   │       └ but don't go too far
         "                   └ move away (+1) from `a` (n1-a)
     "}}}
@@ -664,12 +511,12 @@ fu s:lightness(more, ...) abort "{{{2
 
         "   ┌ value to be used the NEXT time we execute `:colo seoul256-light`
         "   │
-        let g:seoul256_light_background = get(g:, 'seoul256_light_background', 253)
+        let g:seoul256_light_background = get(g:, 'seoul256_light_background', g:seoul256_default_lightness)
 
         " update `g:seoul256_light_background`
         let g:seoul256_light_background = a:more
-        \ ?       (g:seoul256_light_background - 252 + 1)%(4+1) + 252
-        \ :       256 - (256 - g:seoul256_light_background +1)%(4+1)
+            \ ? (g:seoul256_light_background - 252 + 1)%(4+1) + 252
+            \ : 256 - (256 - g:seoul256_light_background +1)%(4+1)
 
         " update colorscheme
         colo seoul256-light
@@ -684,8 +531,8 @@ fu s:lightness(more, ...) abort "{{{2
         let g:seoul256_background = get(g:, 'seoul256_background', 237)
 
         let g:seoul256_background = a:more
-        \ ?       (g:seoul256_background - 233 + 1)%(6+1) + 233
-        \ :       239 - (239 - g:seoul256_background +1)%(6+1)
+            \ ? (g:seoul256_background - 233 + 1)%(6+1) + 233
+            \ : 239 - (239 - g:seoul256_background +1)%(6+1)
 
         colo seoul256
         let level = g:seoul256_background - 233 + 1
@@ -711,23 +558,6 @@ fu s:showbreak(enable) abort "{{{2
     let &showbreak = a:enable ? '↪' : ''
     " Used in the autocmd `my_showbreak` in vimrc to (re)set `'showbreak'`.
     let b:showbreak = a:enable
-endfu
-
-fu s:stl_list_position(is_fwd, ...) abort "{{{2
-    if a:0
-        let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0) == 0
-                                 \ ?     (empty(getqflist()) ? 2 : 1)
-                                 \ :     0
-        return
-    endif
-
-    let g:my_stl_list_position = get(g:, 'my_stl_list_position', 0)
-    let g:my_stl_list_position = a:is_fwd
-    \ ?               (g:my_stl_list_position + 1)%(2+1)
-    \ :               2 - (2 - g:my_stl_list_position + 1)%(2+1)
-
-    " necessary to update the list position item immediately
-    redraws
 endfu
 
 fu s:toggle_hl_yanked_text(action) abort "{{{2
@@ -816,10 +646,10 @@ endfu
 " Mappings {{{1
 " 2 "{{{2
 
-call s:toggle_settings('list'          , 'I')
 call s:toggle_settings('previewwindow' , 'P')
 call s:toggle_settings('showcmd'       , 'W')
 call s:toggle_settings('hlsearch'      , 'h')
+call s:toggle_settings('list'          , 'i')
 call s:toggle_settings('cursorcolumn'  , 'o')
 call s:toggle_settings('spell'         , 's')
 call s:toggle_settings('wrap'          , 'w')
@@ -833,15 +663,6 @@ call s:toggle_settings('lightness',
 call s:toggle_settings('conceallevel',
 \                      'c',
 \                      '[0, 3]')
-
-call s:toggle_settings('stl_list_position',
-\                      'i',
-\                      '[0, 0]')
-"                        ^  ^
-"                        doesn't matter, we don't use these values
-"                        TODO:
-"                        if we don't use them, something should be improved
-"                        in the design of `s:toggle_settings()`
 
 " 5 {{{2
 
@@ -860,7 +681,7 @@ call s:toggle_settings('colorscheme',
 call s:toggle_settings('diff everything',
 \                      'D',
 \                      'windo diffthis',
-\                      'diffoff!',
+\                      'diffoff! <bar> norm! zv',
 \                      '&l:diff')
 
 " Mnemonic:
@@ -873,22 +694,24 @@ call s:toggle_settings('verbose errors',
 call s:toggle_settings('diff',
 \                      'd',
 \                      'diffthis',
-\                      'diffoff',
+\                      'diffoff <bar> norm! zv',
 \                      '&l:diff')
 
 " Do *not* use `]L`: it's already taken to move to the last entry in the ll.
 call s:toggle_settings('cursorline',
 \                      'L',
-\                      'call <sid>cursorline(1)',
-\                      'call <sid>cursorline(0)',
+\                      'call colorscheme#cursorline(1)',
+\                      'call colorscheme#cursorline(0)',
 \                      'exists("#my_cursorline")')
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
 "
-"     1. nonumber + norelativenumber
-"     2. number   +   relativenumber
-"     3. number   + norelativenumber
+"    1. nonumber + norelativenumber
+"    2. number   +   relativenumber
+"    3. number   + norelativenumber
+"
+" ---
 "
 "     nno <silent> con :<c-u>call <sid>numbers()<cr>
 "
