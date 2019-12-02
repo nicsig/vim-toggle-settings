@@ -591,7 +591,7 @@ fu s:toggle_settings(...) abort "{{{2
 
         return
 
-    elseif a:0 == 3
+    elseif a:0 == 3 && a:3 isnot# 'silent'
         let [a_func, letter, values] = [a:1, a:2, eval(a:3)]
         exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>call <sid>'..a_func..'(0)<cr>'
         exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>call <sid>'..a_func..'(1)<cr>'
@@ -599,14 +599,14 @@ fu s:toggle_settings(...) abort "{{{2
 
         return
 
-    elseif a:0 == 2
+    elseif a:0 == 2 || a:0 == 3 && a:3 is# 'silent'
         let [label, letter, cmd1, cmd2, msg1, msg2, test] = [
             \ a:1,
             \ a:2,
             \ 'setl '..a:1,
             \ 'setl no'..a:1,
-            \ '['..a:1..'] ON',
-            \ '['..a:1..'] OFF',
+            \ get(a:, '3', '') is# 'silent' ? '' : '['..a:1..'] ON',
+            \ get(a:, '3', '') is# 'silent' ? '' : '['..a:1..'] OFF',
             \ '&l:'..a:1,
             \ ]
     else
@@ -619,9 +619,9 @@ fu s:toggle_settings(...) abort "{{{2
         \ ..'<bar>    exe '..string(cmd1)..'<bar>echo '..string(msg1)
         \ ..'<bar>endif'
 
-    exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>'..cmd1..'<bar>echo '..string(msg1)..'<cr>'
-    exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>'..cmd2..'<bar>echo '..string(msg2)..'<cr>'
-    exe 'nno  <silent><unique>  co'..letter..'  :<c-u>'..rhs3..'<cr>'
+    exe 'nno <silent><unique> [o'..letter..' :<c-u>'..cmd1..'<bar>echo '..string(msg1)..'<cr>'
+    exe 'nno <silent><unique> ]o'..letter..' :<c-u>'..cmd2..'<bar>echo '..string(msg2)..'<cr>'
+    exe 'nno <silent><unique> co'..letter..' :<c-u>'..rhs3..'<cr>'
 endfu
 
 fu s:verbose_errors(enable) abort "{{{2
@@ -646,11 +646,11 @@ endfu
 " Mappings {{{1
 " 2 "{{{2
 
-call s:toggle_settings('previewwindow' , 'P')
+call s:toggle_settings('previewwindow' , 'P', 'silent')
 call s:toggle_settings('showcmd'       , 'W')
 call s:toggle_settings('hlsearch'      , 'h')
-call s:toggle_settings('list'          , 'i')
-call s:toggle_settings('cursorcolumn'  , 'o')
+call s:toggle_settings('list'          , 'i', 'silent')
+call s:toggle_settings('cursorcolumn'  , 'o', 'silent')
 call s:toggle_settings('spell'         , 's')
 call s:toggle_settings('wrap'          , 'w')
 
