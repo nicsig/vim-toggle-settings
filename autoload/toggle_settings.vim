@@ -24,7 +24,7 @@ let g:autoloaded_toggle_settings = 1
 "}}}
 "   Ok, but concretely, what should I avoid?{{{
 "
-" NEVER write this:
+" *Never* write this:
 "
 "            ┌ boolean argument:
 "            │
@@ -630,12 +630,11 @@ fu s:verbose_errors(enable) abort "{{{2
 endfu
 
 fu s:virtualedit(action) abort "{{{2
-    if a:action is# 'is_all'
-        return exists('s:ve_save')
-    elseif a:action is# 'enable' && !exists('s:ve_save')
+    if a:action is# 'enable' && &ve isnot# 'all'
         let s:ve_save = &ve
         set ve=all
-    elseif a:action is# 'disable' && exists('s:ve_save')
+    elseif a:action is# 'disable'
+        " `block` is the default value we set in our vimrc
         let &ve = get(s:, 've_save', 'block')
         unlet! s:ve_save
     endif
@@ -754,7 +753,7 @@ call s:toggle_settings('virtualedit',
 \                      'v',
 \                      'call <sid>virtualedit("enable")',
 \                      'call <sid>virtualedit("disable")',
-\                      '<sid>virtualedit("is_all")')
+\                      '&ve is# "all"')
 
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
 call s:toggle_settings('auto open fold',
@@ -818,10 +817,4 @@ call s:toggle_settings('hl yanked text',
 \                      'ON',
 \                      'OFF',
 \                      '<sid>toggle_hl_yanked_text("is_active")')
-"                        │
-"                        └ We can't use a  script-local variable, because we can't
-"                          access it from a mapping:
-"
-"                              exists('s:my_var')       ✘
-"                              exists('<sid>my_var')    ✘
 
