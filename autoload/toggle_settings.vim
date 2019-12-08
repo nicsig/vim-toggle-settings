@@ -638,7 +638,6 @@ fu s:virtualedit(action) abort "{{{2
         let &ve = get(s:, 've_save', 'block')
         unlet! s:ve_save
     endif
-    redrawt
 endfu
 " }}}1
 
