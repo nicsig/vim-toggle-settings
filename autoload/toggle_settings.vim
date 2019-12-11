@@ -3,18 +3,29 @@ if exists('g:autoloaded_toggle_settings')
 endif
 let g:autoloaded_toggle_settings = 1
 
+" FAQ {{{1
+
+" I want to toggle between the global value and the local value of a buffer-local option.
+" Which one should I consider to be the "enabled" state?{{{
+"
+" The local value.
+" It makes sense,  because usually when you  enable sth, you tend  to think it's
+" special (e.g.  you enter a  temporary special mode);  the global value  is not
+" special, it's common.
+"}}}
+
 " Don't forget to properly handle repeated (dis)activations. {{{
 "
 " Necessary when you save/restore a state with a custom variable.
 "
 " When you write a function  to activate/disactivate/toggle some state, do *not*
 " assume it will only be used for repeated toggling.
-" It  can also  be used  for (accidental)  repeated activation,  or (accidental)
-" repeated disactivation.
+" It can  also be  used for (accidental)  repeated activations,  or (accidental)
+" repeated disactivations.
 "
 " There is no issue if the function  doesn't save/restore a state using a custom
-" variable (ex: `#cursorline()`).   But if it does  (ex: `s:virtualedit()`), but
-" doesn't handle repeated (dis)activations, it can lead to errors.
+" variable (ex:  `s:colorscheme()`).  But if it  does (ex: `#auto_open_fold()`),
+" but doesn't handle repeated (dis)activations, it can lead to errors.
 "
 " For example,  if you transit to  the same state  twice, the 1st time,  it will
 " work as expected: the  function will save the original state,  A, then put you
@@ -26,28 +37,65 @@ let g:autoloaded_toggle_settings = 1
 "
 " *Never* write this:
 "
-"            ┌ boolean argument:
-"            │
-"            │      - when it's 1 it means we want to enable  some state
-"            │      - "         0                     disable "
-"            │
-"         if a:enable                       ✘
-"             let s:save = ...
-"                 │
-"                 └ save current state for future restoration
-"             ...
-"         else                              ✘
-"             ...
-"         endif
+"        ┌ boolean argument:
+"        │
+"        │      - when it's 1 it means we want to enable  some state
+"        │      - "         0                     disable "
+"        │
+"     if a:enable                       ✘
+"         let s:save = ...
+"             │
+"             └ save current state for future restoration
+"         ...
+"     else                              ✘
+"         ...
+"     endif
 "
 " Instead:
 "
-"         if a:enable && is_disabled        ✔
-"             let s:save = ...
-"             ...
-"         elseif a:disable && is_enabled    ✔
-"             ...
-"         endif
+"     if a:enable && is_disabled        ✔
+"         let s:save = ...
+"         ...
+"     elseif a:disable && is_enabled    ✔
+"         ...
+"     endif
+"
+" ---
+"
+" The tricky part is finding the right expression for `is_disabled` and `is_enabled`.
+" If you want  to toggle an option with  only 2 possible values –  e.g. 'on' and
+" 'off' – then it's easy:
+"
+"     is_disabled = opt is# 'off'
+"     is_enabled  = opt is# 'on'
+"
+" If you want to  alternate between 2 values – e.g. 'a' and  'c' – for an option
+" which can have  more than 2 values –  e.g. 'a', 'b' and 'c' –  then it's still
+" easy, but there is a catch:
+"
+"     is_disabled = opt isnot# 'c'
+"     is_enabled  = opt isnot# 'a'
+"                       │
+"                       └ you have to use a negative assertion,
+"                         otherwise your code would not handle correctly the case
+"                         where `opt` has the value `b` (set by accident or by another plugin)
+"
+" ---
+"
+" In any case, an ad-hoc variable is not a good proxy to write `is_enabled` and `is_disabled`:
+"
+"     if a:disable && is_enabled
+"     →
+"     if a:disable && exists('s:opt_save')
+"                     ├──────────────────┘
+"                     └ wrong: `opt` could have been enabled manually via a `:set` command (or by another plugin)
+"                       in which case `s:opt_save` does not exist, and yet `opt` *is* enabled
+"
+" Exception:
+"
+" If you are toggling  an ad-hoc feature which can *only*  be manipulated by the
+" function you are writing, then an ad-hoc  variable is probably ok and may even
+" be the only reliable way to write the expressions.
 "}}}
 "   Which functions are concerned?{{{
 "
@@ -72,6 +120,9 @@ const s:AOF_LHS2NORM = {
     \ 'G': 'G',
     \ }
 
+let s:fp_save = {}
+let s:hl_yanked_text = 0
+
 " Autocmds {{{1
 
 augroup hl_yanked_text
@@ -80,6 +131,48 @@ augroup hl_yanked_text
 augroup END
 
 " Functions {{{1
+fu s:toggle_settings(...) abort "{{{2
+    if index([2, 3, 4], a:0) == -1 | return | endif
+
+    if a:0 == 2
+        let [letter, cmd1, cmd2, test] = [
+            \ a:2,
+            \ 'setl '..a:1,
+            \ 'setl no'..a:1,
+            \ '&l:'..a:1,
+            \ ]
+
+        let rhs3 =  'if '..test
+            \ ..'<bar>    exe '..string(cmd2)
+            \ ..'<bar>else'
+            \ ..'<bar>    exe '..string(cmd1)
+            \ ..'<bar>endif'
+
+        exe 'nno <silent><unique> [o'..letter..' :<c-u>'..cmd1..'<cr>'
+        exe 'nno <silent><unique> ]o'..letter..' :<c-u>'..cmd2..'<cr>'
+        exe 'nno <silent><unique> co'..letter..' :<c-u>'..rhs3..'<cr>'
+
+    elseif a:0 == 3
+        let [a_func, letter, values] = [a:1, a:2, eval(a:3)]
+        exe 'nno <silent><unique> [o'..letter..' :<c-u>call <sid>'..a_func..'(0)<cr>'
+        exe 'nno <silent><unique> ]o'..letter..' :<c-u>call <sid>'..a_func..'(1)<cr>'
+        exe 'nno <silent><unique> co'..letter..' :<c-u>call <sid>'..a_func..'(0,'..values[0]..','..values[1]..')<cr>'
+
+    elseif a:0 == 4
+        let [letter, cmd1, cmd2, test] = a:000
+
+        let rhs3 = '     if '..test
+            \ ..'<bar>    exe '..string(cmd2)
+            \ ..'<bar>else'
+            \ ..'<bar>    exe '..string(cmd1)
+            \ ..'<bar>endif'
+
+        exe 'nno <silent><unique> [o'..letter..' :<c-u>'..cmd1..'<cr>'
+        exe 'nno <silent><unique> ]o'..letter..' :<c-u>'..cmd2..'<cr>'
+        exe 'nno <silent><unique> co'..letter..' :<c-u>'..rhs3..'<cr>'
+    endif
+endfu
+
 fu toggle_settings#auto_open_fold(action) abort "{{{2
     if a:action is# 'enable' && !exists('b:auto_open_fold_mappings')
         if foldclosed('.') != -1
@@ -123,40 +216,46 @@ fu toggle_settings#auto_open_fold(action) abort "{{{2
 
     " Old Code:{{{
     "
-    "     if a:action is# 'is_active'
-    "         return exists('s:fold_options_save')
-    "     elseif a:action is# 'enable' && !exists('s:fold_options_save')
-    "         let s:fold_options_save = {
-    "         \                           'close'  : &foldclose,
-    "         \                           'open'   : &foldopen,
-    "         \                           'enable' : &foldenable,
-    "         \                           'level'  : &foldlevel,
-    "         \                         }
-    "
-    "         " Consider setting 'foldnestmax' if you use 'indent'/'syntax' as a folding method.{{{
-    "         "
-    "         " If you set the local value of  'fdm' to 'indent' or 'syntax', Vim will
-    "         " automatically fold the buffer according to its indentation / syntax.
-    "         "
-    "         " It can lead to deeply nested folds. This can be annoying when you have
-    "         " to open  a lot of  folds to  read the contents  of a line.
-    "         "
-    "         " One way to tackle this issue  is to reduce the value of 'foldnestmax'.
-    "         " By default  it's 20 (which is  the deepest level of  nested folds that
-    "         " Vim can produce with these 2 methods  anyway). If you set it to 1, Vim
-    "         " will only produce folds for the outermost blocks (functions/methods).
-    "        "}}}
-    "         set foldclose=all " close a fold if we leave it with any command
-    "         set foldopen=all  " open  a fold if we enter it with any command
-    "         set foldenable
-    "         set foldlevel=0   " close all folds by default
-    "     elseif a:action is# 'disable' && exists('s:fold_options_save')
-    "         for op in keys(s:fold_options_save)
-    "             exe 'let &fold'.op.' = s:fold_options_save.'.op
-    "         endfor
-    "         norm! zMzv
-    "         unlet! s:fold_options_save
-    "     endif
+    "     fu s:auto_open_fold(action) abort
+    "         if a:action is# 'enable' && &foldopen isnot# 'all'
+    "             let s:fold_options_save = {
+    "                 \ 'open'   : &foldopen,
+    "                 \ 'close'  : &foldclose,
+    "                 \ 'enable' : &foldenable,
+    "                 \ 'level'  : &foldlevel,
+    "                 \ }
+    "             " Consider setting 'foldnestmax' if you use 'indent'/'syntax' as a folding method.{{{
+    "             "
+    "             " If you set the local value of  'fdm' to 'indent' or 'syntax', Vim will
+    "             " automatically fold the buffer according to its indentation / syntax.
+    "             "
+    "             " It can lead to deeply nested folds. This can be annoying when you have
+    "             " to open  a lot of  folds to  read the contents  of a line.
+    "             "
+    "             " One way to tackle this issue  is to reduce the value of 'foldnestmax'.
+    "             " By default  it's 20 (which is  the deepest level of  nested folds that
+    "             " Vim can produce with these 2 methods  anyway). If you set it to 1, Vim
+    "             " will only produce folds for the outermost blocks (functions/methods).
+    "            "}}}
+    "             set foldclose=all
+    "             set foldopen=all
+    "             set foldenable
+    "             set foldlevel=0
+    "         elseif a:action is# 'disable' && &foldopen is# 'all'
+    "             for op in keys(s:fold_options_save)
+    "                 exe 'let &fold'..op..' = s:fold_options_save.'..op
+    "             endfor
+    "             norm! zMzv
+    "             unlet! s:fold_options_save
+    "         endif
+    "     endfu
+    "     call s:toggle_settings(
+    "         \ 'auto open fold',
+    "         \ 'z',
+    "         \ 'call <sid>auto_open_fold("enable")',
+    "         \ 'call <sid>auto_open_fold("disable")',
+    "         \ '&foldopen is# "all"',
+    "         \ )
     "}}}
     "   What did it do?{{{
     "
@@ -192,7 +291,7 @@ endfu
 " Besides, I kinda like the current behavior.
 " If you press `zR`, you can move with `j`/`k` in the buffer without folds being closed.
 " If you press `zM`, folds are opened/closed automatically again.
-" This gives you a little more control about this feature.
+" It gives you a little more control about this feature.
 "}}}
 fu s:move_and_open_fold(lhs) abort
     let old_foldlevel = foldlevel('.')
@@ -283,8 +382,8 @@ fu s:fix_winline(old, dir) abort
     endif
 endfu
 
-fu s:colorscheme(is_light) abort "{{{2
-    if a:is_light
+fu s:colorscheme(type) abort "{{{2
+    if a:type is# 'light'
         colo seoul256-light
     else
         colo seoul256
@@ -296,9 +395,9 @@ fu s:conceallevel(is_fwd, ...) abort "{{{2
         " Why toggling between `0` and `2`, instead of `0` and `3` like everywhere else?{{{
         "
         " In a markdown file, we want to see `cchar`.
-        " It's useful to see a marker denoting a concealed answer to a question,
-        " for example. It could also be useful to pretty-print some logical/math
-        " symbols.
+        " For example, it's  useful to see a marker denoting  a concealed answer
+        " to a question.
+        " It could also be useful to pretty-print some logical/math symbols.
         "}}}
         if &ft is# 'markdown'
             let &l:cole = &l:cole == 2 ? 0 : 2
@@ -309,19 +408,22 @@ fu s:conceallevel(is_fwd, ...) abort "{{{2
         return
     endif
 
-    let new_val = a:is_fwd
-              \ ?     (&l:cole + 1)%(3+1)
-              \ :     3 - (3 - &l:cole + 1)%(3+1)
+    if a:is_fwd
+        let new_val = (&l:cole + 1)%(3+1)
+    else
+        let new_val = 3 - (3 - &l:cole + 1)%(3+1)
+    endif
 
-    " We are not interested in level 1.
-    " The 3 other levels are enough. If I want to see:
+    " We are not interested in level 1. The 3 other levels are enough:{{{
     "
-    "    - everything = 0
-    "
-    "    - what is useful = 2
-    "      has a replacement character: `cchar`, {'conceal': 'x'}
-    "
-    "    - nothing = 3
+    "    ┌─────────────────────────────┬───┐
+    "    │ everything                  │ 0 │
+    "    ├─────────────────────────────┼───┤
+    "    │ concealed but has a `cchar` │ 2 │
+    "    ├─────────────────────────────┼───┤
+    "    │ nothing                     │ 3 │
+    "    └─────────────────────────────┴───┘
+    "}}}
     if new_val == 1
         let new_val = a:is_fwd ? 2 : 0
     endif
@@ -331,9 +433,8 @@ fu s:conceallevel(is_fwd, ...) abort "{{{2
 endfu
 
 fu s:edit_help_file(allow) "{{{2
-    if &ft isnot# 'help'
-        return
-    endif
+    if &ft isnot# 'help' | return | endif
+
     if a:allow && !empty(maparg('q', 'n', 0, 1))
         nno <buffer><nowait><silent> <cr> 80<bar>
 
@@ -346,78 +447,35 @@ fu s:edit_help_file(allow) "{{{2
             exe 'sil unmap <buffer> '..a_key
         endfor
 
-        for pat in map(keys, {_,v ->  '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'..v.."'"})
+        for pat in map(keys, {_,v -> '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'..v.."'"})
             let b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
         endfor
 
-        setl modifiable noreadonly bt=
+        setl ma noro bt=
         echo 'you CAN edit the file'
 
     elseif !a:allow && empty(maparg('q', 'n', 0, 1))
         " reload ftplugin
         edit
-        setl nomodifiable readonly bt=help
+        setl noma ro bt=help
         echo 'you can NOT edit the file'
     endif
 endfu
 
 fu s:formatprg(scope) abort "{{{2
-    if a:scope is# 'global' && (!exists('s:local_fp_save') || !has_key(s:local_fp_save, bufnr('%')))
-        if !exists('s:local_fp_save')
-            let s:local_fp_save = {}
+    if a:scope is# 'local' && &l:fp is# ''
+        let bufnr = bufnr('%')
+        if has_key(s:fp_save, bufnr)
+            let &l:fp = s:fp_save[bufnr]
+            unlet! s:fp_save[bufnr]
         endif
-        " use a dictionary to  save the local value of 'fp'  in any buffer where
-        " we use our mappings to toggle the latter
-        let s:local_fp_save[bufnr('%')] = &l:fp
+    elseif a:scope is# 'global' && &l:fp isnot# ''
+        " save the local value on a per-buffer basis
+        let s:fp_save[bufnr('%')] = &l:fp
+        " clear the local value so that the global one is used
         set fp<
-    elseif a:scope is# 'local' && exists('s:local_fp_save') && has_key(s:local_fp_save, bufnr('%'))
-        " `js-beautify` is a formatting tool for js, html, css.
-        "
-        " Installation:
-        "
-        "     $ sudo npm -g install js-beautify
-        "
-        " Documentation:
-        " https://github.com/beautify-web/js-beautify
-        "
-        " The tool has  many options, you can use the  ones you find interesting
-        " in the value of 'fp'.
-        let &l:fp = get(s:local_fp_save, bufnr('%'), &l:fp)
-        unlet! s:local_fp_save[bufnr('%')]
     endif
-    echo '[formatprg] '..(!empty(&l:fp) ? &l:fp : &g:fp)
-endfu
-
-fu s:hl_yanked_text() abort "{{{2
-    try
-        "  ┌ don't highlight anything if we didn't copy anything
-        "  │
-        "  │                              ┌ don't highlight anything if Vim has copied
-        "  │                              │ the visual selection in `*` after we leave
-        "  │                              │ visual mode
-        "  ├─────────────────────────┐    ├─────────────────────┐
-        if v:event.operator isnot# 'y' || v:event.regname is# '*'
-            return
-        endif
-
-        let text = v:event.regcontents
-        let type = v:event.regtype
-        if type is# 'v'
-            let text = join(v:event.regcontents, "\n")
-            let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
-        elseif type is# 'V'
-            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
-        elseif type =~# "\<c-v>"..'\d\+'
-            let width = matchstr(type, "\<c-v>"..'\zs\d\+')
-            let [line, vcol] = [line('.'), virtcol('.')]
-            let pat = join(map(text, {i -> '\%'..(line+i)..'l\%'..vcol..'v.\{'..width..'}'}), '\|')
-        endif
-
-        let id = matchadd('IncSearch', pat, 0, -1)
-        call timer_start(250, {_ -> exists('id') ? matchdelete(id) : ''})
-    catch
-        return lg#catch_error()
-    endtry
+    echo '[formatprg] '..(!empty(&l:fp) ? &l:fp..' (local)' : &g:fp..' (global)')
 endfu
 
 fu s:lightness(more, ...) abort "{{{2
@@ -484,7 +542,7 @@ fu s:lightness(more, ...) abort "{{{2
         "                   │       │      └ we want the distance from 0, not from `a`; so add `a`
         "                   │       └ but don't go too far
         "                   └ move away (+1) from `a` (n1-a)
-    "}}}
+        "}}}
         " How to make a number cycle through [a+p, a+p-1, ..., a] ?{{{
         "
         " We want to cycle from `a+p` down to `a`.
@@ -555,88 +613,79 @@ fu s:matchparen(enable) abort "{{{2
 endfu
 
 fu s:showbreak(enable) abort "{{{2
-    let &showbreak = a:enable ? '↪' : ''
-    " Used in the autocmd `my_showbreak` in vimrc to (re)set `'showbreak'`.
-    let b:showbreak = a:enable
+    if a:enable
+        setl sbr=↪
+    elseif ! a:enable
+        " Do *not* write `set sbr<`.{{{
+        "
+        " It would work as expected in Vim, but not in Nvim.
+        " This is because, in the latter, `'sbr'` is still a global option.
+        " In Vim, it  was made a global-local option in  8.1.2281, but the patch
+        " has not been ported to Nvim yet.
+        "
+        " ---
+        "
+        " Here's what happens:
+        "
+        "    - in Vim, `:setl sbr=` empties the local value, which causes the
+        "      global value to be used instead; and the global value is empty
+        "
+        "    - in Nvim, `:setl sbr=` empties the global value (because there is no local value)
+        "
+        " In both cases, (N)Vim uses the global value which is empty.
+        " In effect, we've disabled the showbreak character.
+        "}}}
+        setl sbr=
+    endif
 endfu
 
 fu s:toggle_hl_yanked_text(action) abort "{{{2
     if a:action is# 'is_active'
-        return exists('s:hl_yanked_text')
-    elseif a:action is# 'enable' && !exists('s:hl_yanked_text')
+        return s:hl_yanked_text == 1
+    elseif a:action is# 'enable'
         let s:hl_yanked_text = 1
-    elseif a:action is# 'disable' && exists('s:hl_yanked_text')
-        unlet! s:hl_yanked_text
+    elseif a:action is# 'disable'
+        let s:hl_yanked_text = 0
     endif
 endfu
 
-fu s:toggle_settings(...) abort "{{{2
-    if a:0 == 7
-        let [label, letter, cmd1, cmd2, msg1, msg2, test] = a:000
-        let msg1 = '['..label..'] '..msg1
-        let msg2 = '['..label..'] '..msg2
+fu s:hl_yanked_text() abort
+    try
+        "  ┌ don't highlight anything if we didn't copy anything
+        "  │
+        "  │                              ┌ don't highlight anything if Vim has copied
+        "  │                              │ the visual selection in `*` after we leave
+        "  │                              │ visual mode
+        "  ├─────────────────────────┐    ├─────────────────────┐
+        if v:event.operator isnot# 'y' || v:event.regname is# '*'
+            return
+        endif
 
-    elseif a:0 == 5
-        let [label, letter, cmd1, cmd2, test] = a:000
+        let text = v:event.regcontents
+        let type = v:event.regtype
+        if type is# 'v'
+            let text = join(v:event.regcontents, "\n")
+            let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
+        elseif type is# 'V'
+            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
+        elseif type =~# "\<c-v>"..'\d\+'
+            let width = matchstr(type, "\<c-v>"..'\zs\d\+')
+            let [line, vcol] = [line('.'), virtcol('.')]
+            let pat = join(map(text, {i -> '\%'..(line+i)..'l\%'..vcol..'v.\{'..width..'}'}), '\|')
+        endif
 
-        let rhs3 = '     if '..test
-            \ ..'<bar>    exe '..string(cmd2)
-            \ ..'<bar>else'
-            \ ..'<bar>    exe '..string(cmd1)
-            \ ..'<bar>endif'
-
-        exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>'..cmd1..'<cr>'
-        exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>'..cmd2..'<cr>'
-        exe 'nno  <silent><unique>  co'..letter..'  :<c-u>'..rhs3..'<cr>'
-
-        return
-
-    elseif a:0 == 3 && a:3 isnot# 'silent'
-        let [a_func, letter, values] = [a:1, a:2, eval(a:3)]
-        exe 'nno  <silent><unique>  [o'..letter..'  :<c-u>call <sid>'..a_func..'(0)<cr>'
-        exe 'nno  <silent><unique>  ]o'..letter..'  :<c-u>call <sid>'..a_func..'(1)<cr>'
-        exe 'nno  <silent><unique>  co'..letter..'  :<c-u>call <sid>'..a_func..'(0,'..values[0]..','..values[1]..')<cr>'
-
-        return
-
-    elseif a:0 == 2 || a:0 == 3 && a:3 is# 'silent'
-        let [label, letter, cmd1, cmd2, msg1, msg2, test] = [
-            \ a:1,
-            \ a:2,
-            \ 'setl '..a:1,
-            \ 'setl no'..a:1,
-            \ get(a:, '3', '') is# 'silent' ? '' : '['..a:1..'] ON',
-            \ get(a:, '3', '') is# 'silent' ? '' : '['..a:1..'] OFF',
-            \ '&l:'..a:1,
-            \ ]
-    else
-        return
-    endif
-
-    let rhs3 =  'if '..test
-        \ ..'<bar>    exe '..string(cmd2)..'<bar>echo '..string(msg2)
-        \ ..'<bar>else'
-        \ ..'<bar>    exe '..string(cmd1)..'<bar>echo '..string(msg1)
-        \ ..'<bar>endif'
-
-    exe 'nno <silent><unique> [o'..letter..' :<c-u>'..cmd1..'<bar>echo '..string(msg1)..'<cr>'
-    exe 'nno <silent><unique> ]o'..letter..' :<c-u>'..cmd2..'<bar>echo '..string(msg2)..'<cr>'
-    exe 'nno <silent><unique> co'..letter..' :<c-u>'..rhs3..'<cr>'
-endfu
-
-fu s:verbose_errors(enable) abort "{{{2
-    let g:my_verbose_errors = a:enable ? 1 : 0
-    echo '[verbose errors] '..(g:my_verbose_errors ? 'ON' : 'OFF')
+        let id = matchadd('IncSearch', pat, 0, -1)
+        call timer_start(250, {_ -> exists('id') ? matchdelete(id) : ''})
+    catch
+        return lg#catch_error()
+    endtry
 endfu
 
 fu s:virtualedit(action) abort "{{{2
-    if a:action is# 'enable' && &ve isnot# 'all'
-        let s:ve_save = &ve
+    if a:action is# 'enable'
         set ve=all
     elseif a:action is# 'disable'
-        " `block` is the default value we set in our vimrc
-        let &ve = get(s:, 've_save', 'block')
-        unlet! s:ve_save
+        let &ve = ''
     endif
 endfu
 " }}}1
@@ -644,63 +693,101 @@ endfu
 " Mappings {{{1
 " 2 "{{{2
 
-call s:toggle_settings('previewwindow' , 'P', 'silent')
-call s:toggle_settings('showcmd'       , 'W')
-call s:toggle_settings('hlsearch'      , 'h')
-call s:toggle_settings('list'          , 'i', 'silent')
-call s:toggle_settings('cursorcolumn'  , 'o', 'silent')
-call s:toggle_settings('spell'         , 's')
-call s:toggle_settings('wrap'          , 'w')
+call s:toggle_settings('previewwindow', 'P')
+call s:toggle_settings('hlsearch'     , 'h')
+call s:toggle_settings('list'         , 'i')
+call s:toggle_settings('spell'        , 's')
+call s:toggle_settings('wrap'         , 'w')
 
 " 3 {{{2
 
-call s:toggle_settings('lightness',
-\                      'l',
-\                      '[253, 256]' )
+call s:toggle_settings(
+    \ 'lightness',
+    \ 'l',
+    \ '[253, 256]',
+    \ )
 
-call s:toggle_settings('conceallevel',
-\                      'c',
-\                      '[0, 3]')
+call s:toggle_settings(
+    \ 'conceallevel',
+    \ 'c',
+    \ '[0, 3]',
+    \ )
 
-" 5 {{{2
+" 4 {{{2
 
-call s:toggle_settings('iwhiteall',
-\                      '<space>',
-\                      'set diffopt+=iwhiteall',
-\                      'set diffopt-=iwhiteall',
-\                      '&diffopt =~# "iwhiteall"')
+call s:toggle_settings(
+    \ '<space>',
+    \ 'set diffopt+=iwhiteall',
+    \ 'set diffopt-=iwhiteall',
+    \ '&diffopt =~# "iwhiteall"',
+    \ )
 
-call s:toggle_settings('colorscheme',
-\                      'C',
-\                      'call <sid>colorscheme(1)',
-\                      'call <sid>colorscheme(0)',
-\                      '&bg is# "light"')
+call s:toggle_settings(
+    \ 'C',
+    \ 'call <sid>colorscheme("dark")',
+    \ 'call <sid>colorscheme("light")',
+    \ '&bg is# "dark"',
+    \ )
 
-call s:toggle_settings('diff everything',
-\                      'D',
-\                      'windo diffthis',
-\                      'diffoff! <bar> norm! zv',
-\                      '&l:diff')
-
-" Mnemonic:
-call s:toggle_settings('verbose errors',
-\                      'V',
-\                      'call <sid>verbose_errors(1)',
-\                      'call <sid>verbose_errors(0)',
-\                      'get(g:, "my_verbose_errors", 0) == 1')
-
-call s:toggle_settings('diff',
-\                      'd',
-\                      'diffthis',
-\                      'diffoff <bar> norm! zv',
-\                      '&l:diff')
+call s:toggle_settings(
+    \ 'D',
+    \ 'windo diffthis',
+    \ 'diffoff! <bar> norm! zv',
+    \ '&l:diff',
+    \ )
 
 " Do *not* use `]L`: it's already taken to move to the last entry in the ll.
-call s:toggle_settings('cursorline',
-\                      'L',
-\                      'call colorscheme#cursorline(1)',
-\                      'call colorscheme#cursorline(0)',
-\                      'exists("#my_cursorline")')
+call s:toggle_settings(
+    \ 'L',
+    \ 'call colorscheme#cursorline(1)',
+    \ 'call colorscheme#cursorline(0)',
+    \ '&l:cul',
+    \ )
+
+call s:toggle_settings(
+    \ 'S',
+    \ 'setl spl=fr<bar>echo "[spelllang] FR"',
+    \ 'setl spl=en<bar>echo "[spelllang] EN"',
+    \ '&l:spl is# "fr"',
+    \ )
+
+call s:toggle_settings(
+    \ 'V',
+    \ 'let g:my_verbose_errors = 1<bar>redrawt',
+    \ 'let g:my_verbose_errors = 0<bar>redrawt',
+    \ 'get(g:, "my_verbose_errors", 0) == 1',
+    \ )
+
+" How is it useful?{{{
+"
+" When we select a  column of `a`'s, it's useful to press `C-a`  and get all the
+" alphabetical characters from `a` to `z`.
+"
+" ---
+"
+" We  use `a`  as the  suffix  for the  lhs,  because it's  easier to  remember:
+" `*a*lpha`, `C-*a*`, ...
+"}}}
+call s:toggle_settings(
+    \ 'a',
+    \ 'setl nf+=alpha',
+    \ 'setl nf-=alpha',
+    \ 'index(split(&l:nf, ","), "alpha") >= 0',
+    \ )
+
+call s:toggle_settings(
+    \ 'b',
+    \ 'call <sid>showbreak(1)',
+    \ 'call <sid>showbreak(0)',
+    \ '&l:sbr isnot# ""',
+    \ )
+
+call s:toggle_settings(
+    \ 'd',
+    \ 'diffthis',
+    \ 'diffoff <bar> norm! zv',
+    \ '&l:diff',
+    \ )
 
 " Alternative:{{{
 " The following mapping/function allows to cycle through 3 states:
@@ -728,92 +815,94 @@ call s:toggle_settings('cursorline',
 "           \ }[&l:nu.&l:rnu]
 "     endfu
 "}}}
-call s:toggle_settings('number',
-\                      'n',
-\                      'setl number relativenumber',
-\                      'setl nonumber norelativenumber',
-\                      '&l:nu')
+call s:toggle_settings(
+    \ 'n',
+    \ 'setl number relativenumber',
+    \ 'setl nonumber norelativenumber',
+    \ '&l:nu',
+    \ )
 
-call s:toggle_settings('MatchParen',
-\                      'p',
-\                      'call <sid>matchparen(1)',
-\                      'call <sid>matchparen(0)',
-\                      'exists("#matchup_matchparen#CursorMoved")')
+call s:toggle_settings(
+    \ 'p',
+    \ 'call <sid>matchparen(1)',
+    \ 'call <sid>matchparen(0)',
+    \ 'g:matchup_matchparen_enabled',
+    \ )
 
-" `gq` is  currently used  to format comments,  but it would  also be  useful to
-" execute formatting tools such as js-beautify.
-call s:toggle_settings('formatprg',
-\                      'q',
-\                      'call <sid>formatprg("global")',
-\                      'call <sid>formatprg("local")',
-\                      '&g:fp is# &l:fp')
+" `gq`  is currently  used to  format comments,  but it  can also  be useful  to
+" execute formatting tools such as js-beautify in html/css/js files.
+call s:toggle_settings(
+    \ 'q',
+    \ 'call <sid>formatprg("local")',
+    \ 'call <sid>formatprg("global")',
+    \ '&l:fp isnot# ""',
+    \ )
 
-call s:toggle_settings('virtualedit',
-\                      'v',
-\                      'call <sid>virtualedit("enable")',
-\                      'call <sid>virtualedit("disable")',
-\                      '&ve is# "all"')
+call s:toggle_settings(
+    \ 't',
+    \ 'let b:foldtitle_full=1 <bar> redraw!',
+    \ 'let b:foldtitle_full=0 <bar> redraw!',
+    \ 'get(b:, "foldtitle_full", 0)',
+    \ )
+
+call s:toggle_settings(
+    \ 'v',
+    \ 'call <sid>virtualedit("enable")',
+    \ 'call <sid>virtualedit("disable")',
+    \ '&ve is# "all"',
+    \ )
+
+call s:toggle_settings(
+    \ 'y',
+    \ 'call <sid>toggle_hl_yanked_text("enable")',
+    \ 'call <sid>toggle_hl_yanked_text("disable")',
+    \ '<sid>toggle_hl_yanked_text("is_active")',
+    \ )
 
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
-call s:toggle_settings('auto open fold',
-\                      'z',
-\                      'call toggle_settings#auto_open_fold("enable")',
-\                      'call toggle_settings#auto_open_fold("disable")',
-\                      'exists("b:auto_open_fold_mappings")')
+call s:toggle_settings(
+    \ 'z',
+    \ 'call toggle_settings#auto_open_fold("enable")',
+    \ 'call toggle_settings#auto_open_fold("disable")',
+    \ 'exists("b:auto_open_fold_mappings")',
+    \ )
 
-call s:toggle_settings('edit help file',
-\                      '~',
-\                      'call <sid>edit_help_file(1)',
-\                      'call <sid>edit_help_file(0)',
-\                      'empty(maparg("q", "n", 0, 1))')
+call s:toggle_settings(
+    \ '~',
+    \ 'call <sid>edit_help_file(1)',
+    \ 'call <sid>edit_help_file(0)',
+    \ 'empty(maparg("q", "n", 0, 1))',
+    \ )
 
-" 7 {{{2
+" TODO: Is an  ad-hoc variable the only  reliable way to write  `is_enabled` and
+" `is_disabled` when we're toggling an ad-hoc feature?
+"
+" Update: It doesn't  seem so. I've been able  to refactor the whole  script and
+" never  inspect an  ad-hoc  variable inside  an  `is_enabled` or  `is_disabled`
+" expression.
+"
+" So the  question is now,  when do  we need to  inspect an ad-hoc  variable (if
+" ever) to write `is_enabled` or `is_disabled`?
+"
+" Answer: I think you  need to inspect an ad-hoc variable  iff the whole purpose
+" of the mappings is to alter the value of this variable.
+" IOW, the issue, here, is not using an ad-hoc variable, but using a proxy.
+" You *can* use an ad-hoc variable, but *never* as a proxy for sth else (e.g. an
+" option being set).
+" Explain why  a proxy is bad  (hint: it has to  do with the fact  that it works
+" only under the assumption that the feature you're toggling can only be toggled
+" via your mapping, which is not always true; and even if it is true now, it may
+" not be true in the future).
+"
+" Make sure we've never used a proxy for any toggling mapping.
 
-call s:toggle_settings('nrformats',
-\                      'N',
-\                      'setl nf+=alpha',
-\                      'setl nf-=alpha',
-\                      '+alpha',
-\                      '-alpha',
-\                      'index(split(&l:nf, ","), "alpha") >= 0')
+" TODO: Study how relevant a FSM is to  toggle an option between 2 values, while
+" it  can have  more than  2 (in  such a  case, a  FSM is  useful to  handle the
+" unexpected  cases  where the  option  has  a value  other  than  the 2  you're
+" accustomed to).
 
-call s:toggle_settings('spelllang',
-\                      'S',
-\                      'setl spl=fr',
-\                      'setl spl=en',
-\                      'FR',
-\                      'EN',
-\                      '&l:spl is# "fr"')
+" TODO: Remove the `&& is_enabled`, `&& is_disabled` whenever it's useless (i.e.
+" whenever we don't save any state in a persistent variable).
 
-call s:toggle_settings('showbreak',
-\                      'b',
-\                      'call <sid>showbreak(1)',
-\                      'call <sid>showbreak(0)',
-\                      'ON',
-\                      'OFF',
-\                      '!empty(&sbr)')
-
-call s:toggle_settings('fugitive branch',
-\                      'g',
-\                      'let g:my_fugitive_branch = 1',
-\                      'let g:my_fugitive_branch = 0',
-\                      'ON',
-\                      'OFF',
-\                      'get(g:, "my_fugitive_branch", 0)')
-
-call s:toggle_settings('fold title',
-\                      't',
-\                      'let b:foldtitle_full=1 <bar> redraw!',
-\                      'let b:foldtitle_full=0 <bar> redraw!',
-\                      'full',
-\                      'short',
-\                      'get(b:, "foldtitle_full", 0)')
-
-call s:toggle_settings('hl yanked text',
-\                      'y',
-\                      'call <sid>toggle_hl_yanked_text("enable")',
-\                      'call <sid>toggle_hl_yanked_text("disable")',
-\                      'ON',
-\                      'OFF',
-\                      '<sid>toggle_hl_yanked_text("is_active")')
+" TODO: Review our comments at the top of the file.
 
