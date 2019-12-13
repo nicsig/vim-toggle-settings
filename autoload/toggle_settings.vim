@@ -7,8 +7,10 @@ let g:autoloaded_toggle_settings = 1
 
 " Don't forget to properly handle repeated (dis)activations. {{{
 "
-" Necessary  when your  (dis)activation  has a  side-effect  like (re)setting  a
+" It's necessary when your (dis)activation  has a side-effect like (re)setting a
 " persistent variable.
+"
+" ---
 "
 " When you write a function  to activate/disactivate/toggle some state, do *not*
 " assume it will only be used for repeated toggling.
@@ -22,21 +24,16 @@ let g:autoloaded_toggle_settings = 1
 " For example, let's assume the function saves in a variable some info necessary
 " to restore the current state.
 " If  you transit  to  the same  state  twice, the  1st time,  it  will work  as
-" expected: the  function will save the  info about the original  state, A, then
-" put you in the new state B.
-" But the 2nd time,  the function will blindly save the info  about the state B,
-" as if you were in state A.
+" expected: the function will save the info about the current state, A, then put
+" you in the new state B.
+" But the  2nd time,  the function will  again save the  info about  the current
+" state – now B – overwriting the info about A.
 " So, when you will invoke it to restore A, you will, in effect, restore B.
 "}}}
 "   Ok, but concretely, what should I avoid?{{{
 "
 " *Never* write this:
 "
-"        ┌ boolean argument:
-"        │
-"        │      - when it's 1 it means we want to enable  some state
-"        │      - "         0                     disable "
-"        │
 "     if a:enable                       ✘
 "         let s:save = ...
 "             │
@@ -51,7 +48,7 @@ let g:autoloaded_toggle_settings = 1
 "     if a:enable && is_disabled        ✔
 "         let s:save = ...
 "         ...
-"     elseif a:disable && is_enabled    ✔
+"     elseif ! a:enable && is_enabled   ✔
 "         ...
 "     endif
 "
@@ -65,23 +62,34 @@ let g:autoloaded_toggle_settings = 1
 "
 " ---
 "
-" The tricky part is finding the right expression for `is_disabled` and `is_enabled`.
+" You have to write the right expressions for `is_disabled` and `is_enabled`.
 " If you want  to toggle an option with  only 2 possible values –  e.g. 'on' and
 " 'off' – then it's easy:
 "
-"     is_disabled = opt is# 'off'
 "     is_enabled  = opt is# 'on'
+"     is_disabled = opt is# 'off'
 "
-" If you  want to toggle  between 2 values  – e.g. 'a' and  'c' – for  an option
-" which can have  more than 2 values –  e.g. 'a', 'b' and 'c' –  then it's still
-" easy, but there is a catch:
+" But  if you  want to  toggle an  option with  more than  2 values  – e.g.  'a'
+" (enabled), 'b' and 'c' (disabled) – then there is a catch.
+" The assertions *must* be negative to handle  the case where the option has the
+" unexpected value 'b'.
 "
-"     is_disabled = opt isnot# 'c'
+" For example, you should not write this:
+"
+"     is_enabled  = opt is# 'a'
+"     is_disabled = opt is# 'c'
+"
+" But this:
+"
+"                       vvvvvv
 "     is_enabled  = opt isnot# 'a'
-"                       │
-"                       └ you have to use a negative assertion,
-"                         otherwise your code would not correctly handle the case
-"                         where `opt` has the value `b` (set by accident or by another plugin)
+"     is_disabled = opt isnot# 'c'
+"                       ^^^^^^
+"
+" With the  first code, if `opt`  has the the value  'b' (set by accident  or by
+" another plugin), your `if`/`elseif` blocks would never be run.
+" With the  second code, if `opt`  has the value  'b', it will always  be either
+" enabled (set to 'a') or disabled (set to 'c').
 "}}}
 
 " What is a proxy expression?{{{
@@ -97,9 +105,9 @@ let g:autoloaded_toggle_settings = 1
 " When we disable X, `s:fp_save` is created inside `s:formatprg()`.
 " So, to  determine whether X  is enabled,  you could check  whether `s:fp_save`
 " exists; if it does not, then X is enabled.
-" But when you define X, you don't need  to refer to `s:fp_save` at any time; so
-" if you're inspecting `s:fp_save`, you're using  it as a proxy expression; it's
-" a proxy for the state X.
+" But when you define  what X is, you don't need to refer  to `s:fp_save` at any
+" point;  so if  you're  inspecting  `s:fp_save`, you're  using  it  as a  proxy
+" expression; it's a proxy for the state X.
 "}}}
 "   Why is it bad to use one?{{{
 "
@@ -111,7 +119,7 @@ let g:autoloaded_toggle_settings = 1
 " local value of `'fp'` is used.
 " The local value could have been emptied  by a third-party plugin (or you could
 " have done it  manually with a `:set[l]` command); in  which case, you're using
-" the global value and yet `s:fp_save` does not exist.
+" the global value, and yet `s:fp_save` does not exist.
 "}}}
 "     When is it still ok to use one?{{{
 "
@@ -122,12 +130,13 @@ let g:autoloaded_toggle_settings = 1
 " whether the matchparen module of matchup is enabled.
 "
 " The alternative would be  to read the source code of  `vim-matchup` to get the
-" name of the autocmd which implements the automatic highlighting of words.
+" name of  the autocmd which  implements the automatic highlighting  of matching
+" words.
 " But that  would be unreliable, because  it's part of the  implementation which
-" may change at any time after a refactoring.
+" may change at any time (e.g. after a refactoring).
 " OTOH, the `g:` variable is reliable, because it's part of the interface of the
-" plugin; as such, the plugin author should not change its name or remove it if
-" they care about backward compatibility.
+" plugin; as such, the plugin author should not change its name or remove it, at
+" least if they care about backward compatibility.
 "}}}
 
 " I want to toggle between the global value and the local value of a buffer-local option.{{{
@@ -138,6 +147,74 @@ let g:autoloaded_toggle_settings = 1
 " It makes sense,  because usually when you  enable sth, you tend  to think it's
 " special (e.g.  you enter a  temporary special mode);  the global value  is not
 " special, it's common.
+"}}}
+
+" About the scrollbind feature: what's the relative offset?{{{
+"
+" It's the difference between the topline  of the current window and the topline
+" of the other bound window.
+"
+" From `:h 'sbo`:
+"
+" > jump      Applies to the offset between two windows for vertical
+" >           scrolling.  This offset is the difference in the first
+" >           displayed line of the bound windows.
+"
+" And from `:h scrollbind-relative`:
+"
+" > Each 'scrollbind' window keeps track of its "relative offset," which can be
+" > thought of as the difference between the current window's vertical scroll
+" > position and the other window's vertical scroll position.
+"}}}
+" What's the effect of the `jump` flag in `'sbo'`?{{{
+"
+" It's included by default; if you remove it, here's what happens:
+"
+"     $ vim -Nu NONE -S <(cat <<'EOF'
+"         set scb sbo=ver lines=24 nu
+"         e /tmp/file1
+"         sil pu =range(char2nr('a'),char2nr('z'))->map({_,v -> nr2char(v)})->repeat(2)
+"         bo vs /tmp/file2
+"         sil pu =range(char2nr('a'),char2nr('z'))->map({_,v -> nr2char(v)})
+"         windo 1
+"         1wincmd w
+"     EOF
+"     )
+"
+" Now, press:
+"
+"    - `jk`
+"
+"       Necessary to avoid what seems to be a bug,
+"       where the second window doesn't scroll when you immediately press `G`.
+"
+"    - `G` to jump at the end of the buffer
+"
+"    - `C-w w` twice to focus the second window and come back
+"
+"       You don't need to press it twice to expose the behavior we're going to discuss;
+"       once is enough;
+"       twice just makes the effect more obvious.
+"
+" The relative offset is not 0 anymore, but 5.
+" This is confirmed by the fact that  if you press `k` repeatedly to scroll back
+" in the  first window, the  difference between the toplines  constantly remains
+" equal to 5.
+"
+" When you reach the top of the buffer, the offset decreases down to 0.
+" But when you press `j` to scroll down, the offset quickly gets back to 5.
+"
+" I don't know  how this behavior can  be useful; I find it  confusing, so don't
+" remove `jump` from `'sbo'`.
+"
+" Note that this effect is cancelled if you also set `'crb'`.
+"
+" For more info, see:
+"
+"     :h 'scb
+"     :h 'sbo
+"     :h scroll-binding
+"     :h scrollbind-relative
 "}}}
 
 " Init {{{1
@@ -155,6 +232,7 @@ const s:AOF_LHS2NORM = {
 
 let s:fp_save = {}
 let s:hl_yanked_text = 0
+let s:scb_save = {}
 
 " Autocmds {{{1
 
@@ -200,8 +278,8 @@ fu s:toggle_settings(...) abort "{{{2
     endif
 endfu
 
-fu toggle_settings#auto_open_fold(action) abort "{{{2
-    if a:action is# 'enable' && !exists('b:auto_open_fold_mappings')
+fu toggle_settings#auto_open_fold(enable) abort "{{{2
+    if a:enable && !exists('b:auto_open_fold_mappings')
         if foldclosed('.') != -1
             norm! zvzz
         endif
@@ -236,15 +314,15 @@ fu toggle_settings#auto_open_fold(action) abort "{{{2
             \     string(substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')),
             \ )
         endfor
-    elseif a:action is# 'disable' && exists('b:auto_open_fold_mappings')
+    elseif ! a:enable && exists('b:auto_open_fold_mappings')
         call lg#map#restore(b:auto_open_fold_mappings)
         unlet! b:auto_open_fold_mappings
     endif
 
     " Old Code:{{{
     "
-    "     fu s:auto_open_fold(action) abort
-    "         if a:action is# 'enable' && &foldopen isnot# 'all'
+    "     fu s:auto_open_fold(enable) abort
+    "         if a:enable && &foldopen isnot# 'all'
     "             let s:fold_options_save = {
     "                 \ 'open'   : &foldopen,
     "                 \ 'close'  : &foldclose,
@@ -268,7 +346,7 @@ fu toggle_settings#auto_open_fold(action) abort "{{{2
     "             set foldopen=all
     "             set foldenable
     "             set foldlevel=0
-    "         elseif a:action is# 'disable' && &foldopen is# 'all'
+    "         elseif ! a:enable && &foldopen is# 'all'
     "             for op in keys(s:fold_options_save)
     "                 exe 'let &fold'..op..' = s:fold_options_save.'..op
     "             endfor
@@ -279,8 +357,8 @@ fu toggle_settings#auto_open_fold(action) abort "{{{2
     "     call s:toggle_settings(
     "         \ 'auto open fold',
     "         \ 'z',
-    "         \ 'call <sid>auto_open_fold("enable")',
-    "         \ 'call <sid>auto_open_fold("disable")',
+    "         \ 'call <sid>auto_open_fold(1)',
+    "         \ 'call <sid>auto_open_fold(0)',
     "         \ '&foldopen is# "all"',
     "         \ )
     "}}}
@@ -523,7 +601,7 @@ fu s:auto_hl_yanked_text() abort
     endtry
 endfu
 
-fu s:lightness(more) abort "{{{2
+fu s:lightness(less) abort "{{{2
     " increase or decrease the lightness
     if &bg is# 'light'
         " `g:seoul256_light_background` is the value to be used the *next* time we execute `:colo seoul256-light`
@@ -570,9 +648,9 @@ fu s:lightness(more) abort "{{{2
         "             │       └ but don't go too far
         "             └ move away (+1) from `a` (n1-a)
         "}}}
-        let g:seoul256_light_background = a:more
-            \ ? (g:seoul256_light_background - 252 + 1)%(4+1) + 252
-            \ : 256 - (256 - g:seoul256_light_background +1)%(4+1)
+        let g:seoul256_light_background = a:less
+            \ ? 256 - (256 - g:seoul256_light_background +1)%(4+1)
+            \ : (g:seoul256_light_background - 252 + 1)%(4+1) + 252
 
         " update colorscheme
         colo seoul256-light
@@ -603,9 +681,9 @@ fu s:lightness(more) abort "{{{2
         "            │
         "            └ we want the distance from 0, not from `a+p`, so add `a+p`
         "}}}
-        let g:seoul256_background = a:more
-            \ ? (g:seoul256_background - 233 + 1)%(6+1) + 233
-            \ : 239 - (239 - g:seoul256_background +1)%(6+1)
+        let g:seoul256_background = a:less
+            \ ? 239 - (239 - g:seoul256_background +1)%(6+1)
+            \ : (g:seoul256_background - 233 + 1)%(6+1) + 233
 
         colo seoul256
         let level = g:seoul256_background - 233 + 1
@@ -656,6 +734,25 @@ fu s:matchparen(enable) abort "{{{2
     echo '[matchparen] '..(g:matchup_matchparen_enabled ? 'ON' : 'OFF')
 endfu
 
+fu s:scrollbind(enable) abort "{{{2
+    let winid = win_getid()
+    if a:enable && ! &l:scb
+        let s:scb_save[winid] = {'crb': &l:crb, 'cul': &l:cul, 'fen': &l:fen}
+        setl scb crb cul nofen
+        " not necessary  because we already set `'crb'` which  seems to have the
+        " same effect, but it doesn't harm
+        syncbind
+    elseif ! a:enable && &l:scb
+        setl noscb
+        if has_key(s:scb_save, winid)
+            let &l:crb = get(s:scb_save[winid], 'crb', &l:crb)
+            let &l:cul = get(s:scb_save[winid], 'cul', &l:cul)
+            let &l:fen = get(s:scb_save[winid], 'fen', &l:fen)
+            unlet! s:scb_save[winid]
+        endif
+    endif
+endfu
+
 fu s:showbreak(enable) abort "{{{2
     if a:enable
         setl sbr=↪
@@ -683,10 +780,10 @@ fu s:showbreak(enable) abort "{{{2
     endif
 endfu
 
-fu s:virtualedit(action) abort "{{{2
-    if a:action is# 'enable'
+fu s:virtualedit(enable) abort "{{{2
+    if a:enable
         set ve=all
-    elseif a:action is# 'disable'
+    else
         let &ve = ''
     endif
 endfu
@@ -698,7 +795,6 @@ endfu
 call s:toggle_settings('P', 'previewwindow')
 call s:toggle_settings('h', 'hlsearch')
 call s:toggle_settings('i', 'list')
-call s:toggle_settings('s', 'spell')
 call s:toggle_settings('w', 'wrap')
 
 " 4 {{{2
@@ -799,12 +895,12 @@ call s:toggle_settings(
 
 " Note: The lightness is not a boolean state.{{{
 "
-" That's why  the numeric argument  passed to  `s:lightness()` has not  the same
-" meaning as in other similar mappings.
+" So the numeric argument passed to  `s:lightness()` has not the same meaning as
+" in other similar mappings.
 "
 " For  example, in  `call <sid>matchparen(1)`,  the `1`  stands for  the enabled
 " state of the matchparen plugin.
-" But here, `1` simply means "more lightness", and `0` means "less lightness".
+" But here, `1` simply means "less lightness", and `0` means "more lightness".
 "
 " That's also why we just write `1` as the final argument passed to `s:toggle_settings()`.
 " We can't  come up  with an  expression describing  the enabled  state, because
@@ -817,8 +913,8 @@ call s:toggle_settings(
 "}}}
 call s:toggle_settings(
     \ 'l',
-    \ 'call <sid>lightness(0)',
     \ 'call <sid>lightness(1)',
+    \ 'call <sid>lightness(0)',
     \ '1',
     \ )
 
@@ -872,6 +968,20 @@ call s:toggle_settings(
     \ )
 
 call s:toggle_settings(
+    \ 'r',
+    \ 'call <sid>scrollbind(1)',
+    \ 'call <sid>scrollbind(0)',
+    \ '&l:scb',
+    \ )
+
+call s:toggle_settings(
+    \ 's',
+    \ 'setl spell<bar>echo "[spell] ON"',
+    \ 'setl nospell<bar>echo "[spell] OFF"',
+    \ '&l:spell',
+    \ )
+
+call s:toggle_settings(
     \ 't',
     \ 'let b:foldtitle_full=1 <bar> redraw!',
     \ 'let b:foldtitle_full=0 <bar> redraw!',
@@ -880,8 +990,8 @@ call s:toggle_settings(
 
 call s:toggle_settings(
     \ 'v',
-    \ 'call <sid>virtualedit("enable")',
-    \ 'call <sid>virtualedit("disable")',
+    \ 'call <sid>virtualedit(1)',
+    \ 'call <sid>virtualedit(0)',
     \ '&ve is# "all"',
     \ )
 
@@ -895,8 +1005,8 @@ call s:toggle_settings(
 " Vim uses `z` as a prefix to build all fold-related commands in normal mode.
 call s:toggle_settings(
     \ 'z',
-    \ 'call toggle_settings#auto_open_fold("enable")',
-    \ 'call toggle_settings#auto_open_fold("disable")',
+    \ 'call toggle_settings#auto_open_fold(1)',
+    \ 'call toggle_settings#auto_open_fold(0)',
     \ 'get(maparg("j", "n", 0, 1), "rhs", "") =~# "move_and_open_fold"'
     \ )
 
