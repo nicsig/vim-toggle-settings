@@ -12,6 +12,7 @@ augroup hoist_toggle_settings
     au!
     au User MyFlags call statusline#hoist('global', '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6)
     au User MyFlags call statusline#hoist('buffer', '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45)
+    au User MyFlags call statusline#hoist('buffer', '%{&l:smc > 999 ? "[smc>999]" : ""}', 46)
     " You could also write `index(split(&l:nf, ","), "alpha") >= 0`?{{{
     "
     " But it seems overkill here.
@@ -21,4 +22,6 @@ augroup hoist_toggle_settings
     "}}}
     au User MyFlags call statusline#hoist('buffer', '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47)
 augroup END
+
+com -bar -nargs=1 FoldToggle call toggle_settings#auto_open_fold(<args>)
 

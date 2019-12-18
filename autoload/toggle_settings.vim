@@ -230,9 +230,12 @@ const s:AOF_LHS2NORM = {
     \ 'G': 'G',
     \ }
 
+const s:SMC_BIG = 3000
+
 let s:fp_save = {}
 let s:hl_yanked_text = 0
 let s:scb_save = {}
+let s:smc_save = {}
 
 " Autocmds {{{1
 
@@ -780,6 +783,19 @@ fu s:showbreak(enable) abort "{{{2
     endif
 endfu
 
+fu s:synmaxcol(enable) abort "{{{2
+    let bufnr = bufnr('%')
+    if a:enable && &l:smc != s:SMC_BIG
+        let s:smc_save[bufnr] = &l:smc
+        let &l:smc = s:SMC_BIG
+    elseif ! a:enable && &l:smc == s:SMC_BIG
+        if has_key(s:smc_save, bufnr)
+            let &l:smc = s:smc_save[bufnr]
+            unlet! s:smc_save[bufnr]
+        endif
+    endif
+endfu
+
 fu s:virtualedit(enable) abort "{{{2
     if a:enable
         set ve=all
@@ -916,6 +932,13 @@ call s:toggle_settings(
     \ 'call <sid>lightness(1)',
     \ 'call <sid>lightness(0)',
     \ '1',
+    \ )
+
+call s:toggle_settings(
+    \ 'm',
+    \ 'call <sid>synmaxcol(1)',
+    \ 'call <sid>synmaxcol(0)',
+    \ '&l:smc == '..s:SMC_BIG,
     \ )
 
 " Alternative:{{{
