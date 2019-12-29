@@ -23,5 +23,5 @@ augroup hoist_toggle_settings
     au User MyFlags call statusline#hoist('buffer', '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47)
 augroup END
 
-com -bar -nargs=1 FoldToggle call toggle_settings#auto_open_fold(<args>)
+com -bar -nargs=1 FoldAutoOpen call toggle_settings#auto_open_fold(<args>)
 
