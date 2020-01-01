@@ -455,7 +455,7 @@ fu s:does_not_distract_in_goyo() abort
     if ! get(g:, 'in_goyo_mode', 0) || &ft is# 'markdown'
         return 1
     endif
-    let cml = matchstr(get(split(&l:cms, '%s', 1), 0, ''), '\S*')
+    let cml = matchstr(&l:cms, '\S*\ze\s*%s')
     " note that we allow opening numbered folds (because usually those can contain code)
     let fmr = '\%('..join(split(&l:fmr, ','), '\|')..'\)'
     return getline('.') !~# '^\s*\V'..escape(cml, '\')..'\m.*'..fmr..'$'
