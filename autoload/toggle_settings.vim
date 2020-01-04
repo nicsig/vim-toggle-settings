@@ -48,7 +48,7 @@ let g:autoloaded_toggle_settings = 1
 "     if a:enable && is_disabled        ✔
 "         let s:save = ...
 "         ...
-"     elseif ! a:enable && is_enabled   ✔
+"     elseif !a:enable && is_enabled   ✔
 "         ...
 "     endif
 "
@@ -317,7 +317,7 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
             \     string(substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')),
             \ )
         endfor
-    elseif ! a:enable && exists('b:auto_open_fold_mappings')
+    elseif !a:enable && exists('b:auto_open_fold_mappings')
         call lg#map#restore(b:auto_open_fold_mappings)
         unlet! b:auto_open_fold_mappings
     endif
@@ -349,7 +349,7 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
     "             set foldopen=all
     "             set foldenable
     "             set foldlevel=0
-    "         elseif ! a:enable && &foldopen is# 'all'
+    "         elseif !a:enable && &foldopen is# 'all'
     "             for op in keys(s:fold_options_save)
     "                 exe 'let &fold'..op..' = s:fold_options_save.'..op
     "             endfor
@@ -452,7 +452,7 @@ endfu
 fu s:does_not_distract_in_goyo() abort
     " In goyo mode, opening a fold containing only a long comment is distracting.
     " Because we only care about the code.
-    if ! get(g:, 'in_goyo_mode', 0) || &ft is# 'markdown'
+    if !get(g:, 'in_goyo_mode', 0) || &ft is# 'markdown'
         return 1
     endif
     let cml = matchstr(&l:cms, '\S*\ze\s*%s')
@@ -703,7 +703,7 @@ fu s:matchparen(enable) abort "{{{2
         return
     endif
 
-    if a:enable && ! g:matchup_matchparen_enabled
+    if a:enable && !g:matchup_matchparen_enabled
         " Why `silent!`?{{{
         "
         " If an error is raised, `abort` would make the function sourcing this file stop.
@@ -712,7 +712,7 @@ fu s:matchparen(enable) abort "{{{2
         sil! au! my_dummy_autocmds
         sil! aug! my_dummy_autocmds
         noa DoMatchParen
-    elseif ! a:enable && g:matchup_matchparen_enabled
+    elseif !a:enable && g:matchup_matchparen_enabled
         " Where is `:NoMatchParen` defined?{{{
         "
         " By default, in `$VIMRUNTIME/plugin/matchparen.vim`
@@ -739,13 +739,13 @@ endfu
 
 fu s:scrollbind(enable) abort "{{{2
     let winid = win_getid()
-    if a:enable && ! &l:scb
+    if a:enable && !&l:scb
         let s:scb_save[winid] = {'crb': &l:crb, 'cul': &l:cul, 'fen': &l:fen}
         setl scb crb cul nofen
         " not necessary  because we already set `'crb'` which  seems to have the
         " same effect, but it doesn't harm
         syncbind
-    elseif ! a:enable && &l:scb
+    elseif !a:enable && &l:scb
         setl noscb
         if has_key(s:scb_save, winid)
             let &l:crb = get(s:scb_save[winid], 'crb', &l:crb)
@@ -759,7 +759,7 @@ endfu
 fu s:showbreak(enable) abort "{{{2
     if a:enable
         setl sbr=↪
-    elseif ! a:enable
+    elseif !a:enable
         " Do *not* write `set sbr<`.{{{
         "
         " It would work as expected in Vim, but not in Nvim.
@@ -788,7 +788,7 @@ fu s:synmaxcol(enable) abort "{{{2
     if a:enable && &l:smc != s:SMC_BIG
         let s:smc_save[bufnr] = &l:smc
         let &l:smc = s:SMC_BIG
-    elseif ! a:enable && &l:smc == s:SMC_BIG
+    elseif !a:enable && &l:smc == s:SMC_BIG
         if has_key(s:smc_save, bufnr)
             let &l:smc = s:smc_save[bufnr]
             unlet! s:smc_save[bufnr]
