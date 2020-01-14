@@ -10,9 +10,13 @@ let g:loaded_toggle_settings = 1
 "}}}
 augroup hoist_toggle_settings
     au!
-    au User MyFlags call statusline#hoist('global', '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6)
-    au User MyFlags call statusline#hoist('buffer', '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45)
-    au User MyFlags call statusline#hoist('buffer', '%{&l:smc > 999 ? "[smc>999]" : ""}', 46)
+    let s:sfile = expand('<sfile>')..':'
+    au User MyFlags call statusline#hoist('global',
+        \ '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6, s:sfile..expand('<sflnum>'))
+    au User MyFlags call statusline#hoist('buffer',
+        \ '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45, s:sfile..expand('<sflnum>'))
+    au User MyFlags call statusline#hoist('buffer',
+       \ '%{&l:smc > 999 ? "[smc>999]" : ""}', 46, s:sfile..expand('<sflnum>'))
     " You could also write `index(split(&l:nf, ","), "alpha") >= 0`?{{{
     "
     " But it seems overkill here.
@@ -20,7 +24,8 @@ augroup hoist_toggle_settings
     " the  test could  give a  false positive;  `&l:nf` can't  contain arbitrary
     " data.
     "}}}
-    au User MyFlags call statusline#hoist('buffer', '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47)
+    au User MyFlags call statusline#hoist('buffer',
+        \ '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47, s:sfile..expand('<sflnum>'))
 augroup END
 
 com -bar -nargs=1 FoldAutoOpen call toggle_settings#auto_open_fold(<args>)
