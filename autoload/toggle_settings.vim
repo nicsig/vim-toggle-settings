@@ -800,7 +800,7 @@ fu s:virtualedit(enable) abort "{{{2
     if a:enable
         set ve=all
     else
-        let &ve = get(g:, 'original_virtualedit', &ve)
+        let &ve = get(g:, 'orig_virtualedit', &ve)
     endif
 endfu
 " }}}1
