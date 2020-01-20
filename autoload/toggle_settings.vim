@@ -388,6 +388,12 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
     "}}}
 endfu
 
+" Warning: Do *not* change the name of this function.{{{
+"
+" If  you really  want  to, then  you'll  need to  refactor  other scripts;  run
+" `:vimgrep` over all our Vimscript files to find out where we refer to the name
+" of this function.
+"}}}
 " Warning: Folds won't be opened/closed if the next line is in a new fold which is not closed.{{{
 "
 " This is because  we run `norm! zMzv`  iff the foldlevel has changed,  or if we
