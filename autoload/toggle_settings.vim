@@ -312,9 +312,10 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
             " command-line.
             "}}}
             exe printf(
-            \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s)<cr>',
+            \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s,%d)<cr>',
             \     lhs,
             \     string(substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')),
+            \     v:count,
             \ )
         endfor
     elseif !a:enable && exists('b:auto_open_fold_mappings')
@@ -407,7 +408,7 @@ endfu
 " If you press `zM`, folds are opened/closed automatically again.
 " It gives you a little more control about this feature.
 "}}}
-fu s:move_and_open_fold(lhs) abort
+fu s:move_and_open_fold(lhs, cnt) abort
     let old_foldlevel = foldlevel('.')
     let old_winline = winline()
     if a:lhs is# 'j' || a:lhs is# '<down>'
@@ -450,7 +451,7 @@ fu s:move_and_open_fold(lhs) abort
     else
         " We want to pass a count if we've pressed `123G`.
         " But we don't want any count if we've just pressed `G`.
-        let cnt = v:count ? v:count : ''
+        let cnt = a:cnt ? a:cnt : ''
         sil! exe 'norm! zR'..cnt..s:AOF_LHS2NORM[a:lhs]..'zMzv'
     endif
 endfu
