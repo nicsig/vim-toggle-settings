@@ -971,13 +971,13 @@ call s:toggle_settings(
 "           \   '11' : 'setl nornu',
 "           \   '01' : 'setl nonu',
 "           \   '10' : 'setl nonu | setl nornu',
-"           \ }[&l:nu.&l:rnu]
+"           \ }[&l:nu..&l:rnu]
 "     endfu
 "}}}
 call s:toggle_settings(
     \ 'n',
-    \ 'setl number relativenumber',
-    \ 'setl nonumber norelativenumber',
+    \ 'setl nu',
+    \ 'setl nonu',
     \ '&l:nu',
     \ )
 
