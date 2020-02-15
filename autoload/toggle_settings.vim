@@ -7,7 +7,7 @@ let g:autoloaded_toggle_settings = 1
 
 " Don't forget to properly handle repeated (dis)activations. {{{
 "
-" It's necessary when your (dis)activation  has a side-effect like (re)setting a
+" It's necessary when your (dis)activation  has a side effect like (re)setting a
 " persistent variable.
 "
 " ---
@@ -17,7 +17,7 @@ let g:autoloaded_toggle_settings = 1
 " It can  also be  used for (accidental)  repeated activations,  or (accidental)
 " repeated disactivations.
 "
-" There is no issue if the  function has no side-effect (ex: `s:colorscheme()`).
+" There is no issue if the  function has no side effect (ex: `s:colorscheme()`).
 " But if it does (e.g. `#auto_open_fold()` creates a `b:` variable), and doesn't
 " handle repeated (dis)activations, you can experience an unexpected behavior.
 "
@@ -53,12 +53,12 @@ let g:autoloaded_toggle_settings = 1
 "     endif
 "
 " Note that  in this pseudo-code, you  don't really need `&&  is_enabled` in the
-" `elseif` block, because it doesn't show any code with a side-effect.
+" `elseif` block, because it doesn't show any code with a side effect.
 " Still, the  code is slightly more  readable when the 2  guards are constructed
 " similarly.
 " Besides, it  makes the  code more  future-proof; if  one of  the `if`/`elseif`
-" blocks has a side-effect now, there is  a good chance that, one day, the other
-" one will *also* have a side-effect.
+" blocks has a side effect now, there is  a good chance that, one day, the other
+" one will *also* have a side effect.
 "
 " ---
 "
