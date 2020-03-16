@@ -607,7 +607,7 @@ fu s:auto_hl_yanked_text() abort
         let id = matchadd('IncSearch', pat, 0, -1)
         call timer_start(250, {-> exists('id') ? matchdelete(id) : ''})
     catch
-        return lg#catch_error()
+        return lg#catch()
     endtry
 endfu
 
