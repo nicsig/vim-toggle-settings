@@ -286,7 +286,7 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
         if foldclosed('.') != -1
             norm! zvzz
         endif
-        let b:auto_open_fold_mappings = lg#map#save('n', 1, keys(s:AOF_LHS2NORM))
+        let b:auto_open_fold_mappings = lg#map#save(keys(s:AOF_LHS2NORM), 'n', v:true)
         for lhs in keys(s:AOF_LHS2NORM)
             " Why do you open all folds with `zR`?{{{
             "
