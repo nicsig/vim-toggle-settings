@@ -810,6 +810,25 @@ fu s:virtualedit(enable) abort "{{{2
         let &ve = get(g:, 'orig_virtualedit', &ve)
     endif
 endfu
+
+fu s:nowrapscan(enable) abort "{{{2
+    if a:enable && !exists('s:ww_save')
+        " Why clearing `'whichwrap'` too?{{{
+        "
+        " It can cause the same issue as `'wrapscan'`.
+        " To stop, a recursive macro may need an error to be raised; however:
+        "
+        "    - this error may be triggered by an `h` or `l` motion
+        "    - `'ww'` suppresses this error if its value contains `h` or `l`
+        "}}}
+        let s:ww_save = &ww
+        set nows ww=
+    elseif !a:enable && exists('s:ww_save')
+        set ws
+        let &ww = s:ww_save
+        unlet! s:ww_save
+    endif
+endfu
 " }}}1
 
 " Mappings {{{1
@@ -863,6 +882,15 @@ call s:toggle_settings(
     \ 'let g:my_verbose_errors = 1<bar>redrawt',
     \ 'let g:my_verbose_errors = 0<bar>redrawt',
     \ 'get(g:, "my_verbose_errors", 0) == 1',
+    \ )
+
+" it's useful to temporarily disable `'wrapscan'` before executing a recursive macro,
+" to be sure it's not stuck in an infinite loop
+call s:toggle_settings(
+    \ 'W',
+    \ 'call <sid>nowrapscan(1)',
+    \ 'call <sid>nowrapscan(0)',
+    \ '&ws == 0',
     \ )
 
 " How is it useful?{{{
