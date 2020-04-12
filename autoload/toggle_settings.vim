@@ -126,7 +126,7 @@ let g:autoloaded_toggle_settings = 1
 " When the expression is *meant* to be used as a proxy, and is not ad-hoc.
 "
 " For example, we use a proxy expression for matchparen; we inspect the value of
-" `g:matchup_matchparen_enabled`. It's  meant to  be used  as a  proxy to  check
+" `g:matchup_matchparen_enabled`.  It's  meant to  be used as  a proxy  to check
 " whether the matchparen module of matchup is enabled.
 "
 " The alternative would be  to read the source code of  `vim-matchup` to get the
@@ -156,15 +156,15 @@ let g:autoloaded_toggle_settings = 1
 "
 " From `:h 'sbo`:
 "
-" > jump      Applies to the offset between two windows for vertical
-" >           scrolling.  This offset is the difference in the first
-" >           displayed line of the bound windows.
+" >     jump      Applies to the offset between two windows for vertical
+" >               scrolling.  This offset is the difference in the first
+" >               displayed line of the bound windows.
 "
 " And from `:h scrollbind-relative`:
 "
-" > Each 'scrollbind' window keeps track of its "relative offset," which can be
-" > thought of as the difference between the current window's vertical scroll
-" > position and the other window's vertical scroll position.
+" >     Each 'scrollbind' window keeps track of its "relative offset," which can be
+" >     thought of as the difference between the current window's vertical scroll
+" >     position and the other window's vertical scroll position.
 "}}}
 " What's the effect of the `jump` flag in `'sbo'`?{{{
 "
@@ -534,8 +534,8 @@ fu s:edit_help_file(allow) "{{{2
             q
             u
         END
-        for a_key in keys
-            exe 'sil unmap <buffer> '..a_key
+        for key in keys
+            exe 'sil unmap <buffer> '..key
         endfor
 
         for pat in map(keys, {_,v -> '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'..v.."'"})
@@ -812,21 +812,33 @@ fu s:virtualedit(enable) abort "{{{2
 endfu
 
 fu s:nowrapscan(enable) abort "{{{2
-    if a:enable && !exists('s:ww_save')
+    " Why do you inspect `'whichwrap'` instead of `'wrapscan'`?{{{
+    "
+    " Well, I think we  need to choose one of them;  can't inspect both, because
+    " we could be in an unexpected state  where one of the option has been reset
+    " manually (or by another plugin) but not the other.
+    "
+    " And if we  need to choose one, I prefer  `'whichwrap'`, because the latter
+    " is not  a simple boolean  flag; if we're in  an unexpected state,  I don't
+    " want to save a wrong empty value.
+    "}}}
+    if a:enable && &whichwrap != ''
         " Why clearing `'whichwrap'` too?{{{
         "
         " It can cause the same issue as `'wrapscan'`.
         " To stop, a recursive macro may need an error to be raised; however:
         "
         "    - this error may be triggered by an `h` or `l` motion
-        "    - `'ww'` suppresses this error if its value contains `h` or `l`
+        "    - `'whichwrap'` suppresses this error if its value contains `h` or `l`
         "}}}
-        let s:ww_save = &ww
-        set nows ww=
-    elseif !a:enable && exists('s:ww_save')
-        set ws
-        let &ww = s:ww_save
-        unlet! s:ww_save
+        let s:whichwrap_save = &whichwrap
+        set nowrapscan whichwrap=
+    elseif !a:enable && &whichwrap == ''
+        if exists('s:whichwrap_save')
+            let &whichwrap = s:whichwrap_save
+            unlet! s:whichwrap_save
+        endif
+        set wrapscan
     endif
 endfu
 " }}}1
