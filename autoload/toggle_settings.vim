@@ -597,7 +597,7 @@ fu s:auto_hl_yanked_text() abort
             let text = join(v:event.regcontents, "\n")
             let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
         elseif type is# 'V'
-            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
+            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+strlen(text)-1)..'l'
         elseif type =~# "\<c-v>"..'\d\+'
             let width = matchstr(type, "\<c-v>"..'\zs\d\+')
             let [line, vcol] = [line('.'), virtcol('.')]
