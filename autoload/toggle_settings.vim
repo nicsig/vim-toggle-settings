@@ -812,17 +812,17 @@ fu s:virtualedit(enable) abort "{{{2
 endfu
 
 fu s:nowrapscan(enable) abort "{{{2
-    " Why do you inspect `'whichwrap'` instead of `'wrapscan'`?{{{
+    " Why do you inspect `'wrapscan'` instead of `'whichwrap'`?{{{
     "
     " Well, I think we  need to choose one of them;  can't inspect both, because
     " we could be in an unexpected state  where one of the option has been reset
     " manually (or by another plugin) but not the other.
     "
-    " And if we  need to choose one, I prefer  `'whichwrap'`, because the latter
-    " is not  a simple boolean  flag; if we're in  an unexpected state,  I don't
-    " want to save a wrong empty value.
+    " And we can't choose `'wrapscan'`.
+    " If the  latter was reset  manually, the function  would fail to  toggle it
+    " back on.
     "}}}
-    if a:enable && &whichwrap != ''
+    if a:enable && &ws
         " Why clearing `'whichwrap'` too?{{{
         "
         " It can cause the same issue as `'wrapscan'`.
@@ -833,7 +833,7 @@ fu s:nowrapscan(enable) abort "{{{2
         "}}}
         let s:whichwrap_save = &whichwrap
         set nowrapscan whichwrap=
-    elseif !a:enable && &whichwrap == ''
+    elseif !a:enable && !&ws
         if exists('s:whichwrap_save')
             let &whichwrap = s:whichwrap_save
             unlet! s:whichwrap_save
