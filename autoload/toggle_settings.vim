@@ -239,8 +239,7 @@ let s:smc_save = {}
 
 " Autocmds {{{1
 
-augroup hl_yanked_text
-    au!
+augroup hl_yanked_text | au!
     au TextYankPost * if s:hl_yanked_text('is_active') | call s:auto_hl_yanked_text() | endif
 augroup END
 
