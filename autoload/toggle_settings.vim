@@ -232,6 +232,8 @@ const s:AOF_LHS2NORM = {
 
 const s:SMC_BIG = 3000
 
+const s:HL_TIME = 250
+
 let s:fp_save = {}
 let s:hl_yanked_text = 0
 let s:scb_save = {}
@@ -579,6 +581,12 @@ fu s:hl_yanked_text(action) abort "{{{2
 endfu
 
 fu s:auto_hl_yanked_text() abort
+    if has('nvim')
+        " `:h lua-highlight`
+        exe printf("lua require'vim.highlight'.on_yank('IncSearch', %d)", s:HL_TIME)
+        return
+    endif
+
     try
         "  ┌ don't highlight anything if we didn't copy anything
         "  │
@@ -604,7 +612,7 @@ fu s:auto_hl_yanked_text() abort
         endif
 
         let id = matchadd('IncSearch', pat, 0, -1)
-        call timer_start(250, {-> exists('id') ? matchdelete(id) : ''})
+        call timer_start(s:HL_TIME, {-> exists('id') ? matchdelete(id) : ''})
     catch
         return lg#catch()
     endtry
