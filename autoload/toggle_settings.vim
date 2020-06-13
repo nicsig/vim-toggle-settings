@@ -442,10 +442,8 @@ fu s:move_and_open_fold(lhs, cnt) abort
         " need to  check `level_changed` to handle  the case where we  move from
         " the start of a nested fold to the previous line in the containing fold
         if (is_in_a_closed_fold || level_changed) && s:does_not_distract_in_goyo()
-            sil! norm! gjzRkzMzv
-            "  │           │{{{
-            "  │           └ don't use `gk` (github issue 4969; fixed but not merged in Nvim)
-            "  └ make sure all the keys are pressed, even if an error occurs
+            " `sil!` to make sure all the keys are pressed, even if an error occurs
+            sil! norm! gjzRgkzMzv
             "}}}
             if get(g:, 'in_goyo_mode', 0) | call s:fix_winline(old_winline, 'k') | endif
         endif
@@ -581,12 +579,6 @@ fu s:hl_yanked_text(action) abort "{{{2
 endfu
 
 fu s:auto_hl_yanked_text() abort
-    if has('nvim')
-        " `:h lua-highlight`
-        exe printf("lua require'vim.highlight'.on_yank('IncSearch', %d)", s:HL_TIME)
-        return
-    endif
-
     try
         "  ┌ don't highlight anything if we didn't copy anything
         "  │
@@ -604,7 +596,7 @@ fu s:auto_hl_yanked_text() abort
             let text = join(v:event.regcontents, "\n")
             let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
         elseif type is# 'V'
-            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+strlen(text)-1)..'l'
+            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
         elseif type =~# "\<c-v>"..'\d\+'
             let width = matchstr(type, "\<c-v>"..'\zs\d\+')
             let [line, vcol] = [line('.'), virtcol('.')]
@@ -774,26 +766,7 @@ fu s:showbreak(enable) abort "{{{2
     if a:enable
         setl sbr=↪
     elseif !a:enable
-        " Do *not* write `set sbr<`.{{{
-        "
-        " It would work as expected in Vim, but not in Nvim.
-        " This is because, in the latter, `'sbr'` is still a global option.
-        " In Vim, it  was made a global-local option in  8.1.2281, but the patch
-        " has not been ported to Nvim yet.
-        "
-        " ---
-        "
-        " Here's what happens:
-        "
-        "    - in Vim, `:setl sbr=` empties the local value, which causes the
-        "      global value to be used instead; and the global value is empty
-        "
-        "    - in Nvim, `:setl sbr=` empties the global value (because there is no local value)
-        "
-        " In both cases, (N)Vim uses the global value which is empty.
-        " In effect, we've disabled the showbreak character.
-        "}}}
-        setl sbr=
+        set sbr<
     endif
 endfu
 
