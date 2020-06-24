@@ -81,10 +81,10 @@ let g:autoloaded_toggle_settings = 1
 "
 " But this:
 "
-"                       vvvvvv
+"                       v----v
 "     is_enabled  = opt isnot# 'a'
 "     is_disabled = opt isnot# 'c'
-"                       ^^^^^^
+"                       ^----^
 "
 " With the  first code, if `opt`  has the the value  'b' (set by accident  or by
 " another plugin), your `if`/`elseif` blocks would never be run.
