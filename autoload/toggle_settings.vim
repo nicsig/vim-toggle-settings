@@ -1026,8 +1026,8 @@ call s:toggle_settings(
 
 call s:toggle_settings(
     \ 's',
-    \ 'setl spell<bar>echo "[spell] ON"',
-    \ 'setl nospell<bar>echo "[spell] OFF"',
+    \ 'setl spell"',
+    \ 'setl nospell"',
     \ '&l:spell',
     \ )
 
