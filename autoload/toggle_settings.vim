@@ -593,7 +593,7 @@ fu s:auto_hl_yanked_text() abort
         let text = v:event.regcontents
         let type = v:event.regtype
         if type is# 'v'
-            let text = join(v:event.regcontents, "\n")
+            let text = join(text, "\n")
             let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
         elseif type is# 'V'
             let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
