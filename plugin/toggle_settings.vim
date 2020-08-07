@@ -9,14 +9,14 @@ let g:loaded_toggle_settings = 1
 " Installing the autocmd *after* `VimEnter` is useless.
 "}}}
 augroup hoist_toggle_settings | au!
-    let s:sfile = expand('<sfile>')..':'
+    let s:sfile = expand('<sfile>') .. ':'
     au User MyFlags call statusline#hoist('global',
-        \ '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6, s:sfile..expand('<sflnum>'))
+        \ '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6, s:sfile .. expand('<sflnum>'))
     au User MyFlags call statusline#hoist('buffer',
-        \ '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45, s:sfile..expand('<sflnum>'))
+        \ '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45, s:sfile .. expand('<sflnum>'))
     au User MyFlags call statusline#hoist('buffer',
-       \ '%{&l:smc > 999 ? "[smc>999]" : ""}', 46, s:sfile..expand('<sflnum>'))
-    " You could also write `index(split(&l:nf, ","), "alpha") >= 0`?{{{
+       \ '%{&l:smc > 999 ? "[smc>999]" : ""}', 46, s:sfile .. expand('<sflnum>'))
+    " You could also write `split(&l:nf, ",")->index("alpha") >= 0`?{{{
     "
     " But it seems overkill here.
     " `&l:nf =~#  'alpha'` is more efficient,  and good enough; I  don't see how
@@ -24,8 +24,7 @@ augroup hoist_toggle_settings | au!
     " data.
     "}}}
     au User MyFlags call statusline#hoist('buffer',
-        \ '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47, s:sfile..expand('<sflnum>'))
+        \ '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47, s:sfile .. expand('<sflnum>'))
 augroup END
 
 com -bar -nargs=1 FoldAutoOpen call toggle_settings#auto_open_fold(<args>)
-

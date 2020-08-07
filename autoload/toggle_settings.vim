@@ -66,7 +66,7 @@ let g:autoloaded_toggle_settings = 1
 " If you want  to toggle an option with  only 2 possible values –  e.g. 'on' and
 " 'off' – then it's easy:
 "
-"     is_enabled  = opt is# 'on'
+"     is_enabled = opt is# 'on'
 "     is_disabled = opt is# 'off'
 "
 " But  if you  want to  toggle an  option with  more than  2 values  – e.g.  'a'
@@ -76,13 +76,13 @@ let g:autoloaded_toggle_settings = 1
 "
 " For example, you should not write this:
 "
-"     is_enabled  = opt is# 'a'
+"     is_enabled = opt is# 'a'
 "     is_disabled = opt is# 'c'
 "
 " But this:
 "
-"                       v----v
-"     is_enabled  = opt isnot# 'a'
+"                      v----v
+"     is_enabled = opt isnot# 'a'
 "     is_disabled = opt isnot# 'c'
 "                       ^----^
 "
@@ -173,9 +173,9 @@ let g:autoloaded_toggle_settings = 1
 "     $ vim -Nu NONE -S <(cat <<'EOF'
 "         set scb sbo=ver lines=24 nu
 "         e /tmp/file1
-"         sil pu =range(char2nr('a'),char2nr('z'))->map({_,v -> nr2char(v)})->repeat(2)
+"         sil pu =range(char2nr('a'), char2nr('z'))->map({_, v -> nr2char(v)})->repeat(2)
 "         bo vs /tmp/file2
-"         sil pu =range(char2nr('a'),char2nr('z'))->map({_,v -> nr2char(v)})
+"         sil pu =range(char2nr('a'), char2nr('z'))->map({_, v -> nr2char(v)})
 "         windo 1
 "         1wincmd w
 "     EOF
@@ -219,6 +219,9 @@ let g:autoloaded_toggle_settings = 1
 
 " Init {{{1
 
+import Catch from 'lg.vim'
+import {MapSave, MapRestore} from 'lg/map.vim'
+
 const s:AOF_LHS2NORM = {
     \ 'j': 'j',
     \ 'k': 'k',
@@ -246,39 +249,43 @@ augroup hl_yanked_text | au!
 augroup END
 
 " Functions {{{1
+fu toggle_settings#_() abort "{{{2
+    " dummy function used in our vimrc to source this script once, and not twice
+endfu
+
 fu s:toggle_settings(...) abort "{{{2
     if index([2, 4], a:0) == -1 | return | endif
 
     if a:0 == 2
         let [letter, cmd1, cmd2, test] = [
             \ a:1,
-            \ 'setl '..a:2,
-            \ 'setl no'..a:2,
-            \ '&l:'..a:2,
+            \ 'setl ' .. a:2,
+            \ 'setl no' .. a:2,
+            \ '&l:' .. a:2,
             \ ]
 
-        let rhs3 =  'if '..test
-            \ ..'<bar>    exe '..string(cmd2)
-            \ ..'<bar>else'
-            \ ..'<bar>    exe '..string(cmd1)
-            \ ..'<bar>endif'
+        let rhs3 = 'if ' .. test
+            \ .. '<bar>    exe ' .. string(cmd2)
+            \ .. '<bar>else'
+            \ .. '<bar>    exe ' .. string(cmd1)
+            \ .. '<bar>endif'
 
-        exe 'nno <silent><unique> [o'..letter..' :<c-u>'..cmd1..'<cr>'
-        exe 'nno <silent><unique> ]o'..letter..' :<c-u>'..cmd2..'<cr>'
-        exe 'nno <silent><unique> co'..letter..' :<c-u>'..rhs3..'<cr>'
+        exe 'nno <silent><unique> [o' .. letter .. ' :<c-u>' .. cmd1 .. '<cr>'
+        exe 'nno <silent><unique> ]o' .. letter .. ' :<c-u>' .. cmd2 .. '<cr>'
+        exe 'nno <silent><unique> co' .. letter .. ' :<c-u>' .. rhs3 .. '<cr>'
 
     elseif a:0 == 4
         let [letter, cmd1, cmd2, test] = a:000
 
-        let rhs3 = '     if '..test
-            \ ..'<bar>    exe '..string(cmd2)
-            \ ..'<bar>else'
-            \ ..'<bar>    exe '..string(cmd1)
-            \ ..'<bar>endif'
+        let rhs3 = '     if ' .. test
+            \ .. '<bar>    exe ' .. string(cmd2)
+            \ .. '<bar>else'
+            \ .. '<bar>    exe ' .. string(cmd1)
+            \ .. '<bar>endif'
 
-        exe 'nno <silent><unique> [o'..letter..' :<c-u>'..cmd1..'<cr>'
-        exe 'nno <silent><unique> ]o'..letter..' :<c-u>'..cmd2..'<cr>'
-        exe 'nno <silent><unique> co'..letter..' :<c-u>'..rhs3..'<cr>'
+        exe 'nno <silent><unique> [o' .. letter .. ' :<c-u>' .. cmd1 .. '<cr>'
+        exe 'nno <silent><unique> ]o' .. letter .. ' :<c-u>' .. cmd2 .. '<cr>'
+        exe 'nno <silent><unique> co' .. letter .. ' :<c-u>' .. rhs3 .. '<cr>'
     endif
 endfu
 
@@ -287,7 +294,7 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
         if foldclosed('.') != -1
             norm! zvzz
         endif
-        let b:auto_open_fold_mappings = lg#map#save(keys(s:AOF_LHS2NORM), 'n', v:true)
+        let b:auto_open_fold_mappings = keys(s:AOF_LHS2NORM)->s:MapSave('n', v:true)
         for lhs in keys(s:AOF_LHS2NORM)
             " Why do you open all folds with `zR`?{{{
             "
@@ -313,14 +320,14 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
             " command-line.
             "}}}
             exe printf(
-            \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s,%d)<cr>',
-            \     lhs,
-            \     string(substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')),
-            \     v:count,
-            \ )
+                \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s, %d)<cr>',
+                \     lhs,
+                \     substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')->string(),
+                \     v:count,
+                \ )
         endfor
     elseif !a:enable && exists('b:auto_open_fold_mappings')
-        call lg#map#restore(b:auto_open_fold_mappings)
+        call s:MapRestore(b:auto_open_fold_mappings)
         unlet! b:auto_open_fold_mappings
     endif
 
@@ -329,22 +336,22 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
     "     fu s:auto_open_fold(enable) abort
     "         if a:enable && &foldopen isnot# 'all'
     "             let s:fold_options_save = {
-    "                 \ 'open'   : &foldopen,
-    "                 \ 'close'  : &foldclose,
-    "                 \ 'enable' : &foldenable,
-    "                 \ 'level'  : &foldlevel,
+    "                 \ 'open': &foldopen,
+    "                 \ 'close': &foldclose,
+    "                 \ 'enable': &foldenable,
+    "                 \ 'level': &foldlevel,
     "                 \ }
     "             " Consider setting 'foldnestmax' if you use 'indent'/'syntax' as a folding method.{{{
     "             "
     "             " If you set the local value of  'fdm' to 'indent' or 'syntax', Vim will
     "             " automatically fold the buffer according to its indentation / syntax.
     "             "
-    "             " It can lead to deeply nested folds. This can be annoying when you have
+    "             " It can lead to deeply nested folds.  This can be annoying when you have
     "             " to open  a lot of  folds to  read the contents  of a line.
     "             "
     "             " One way to tackle this issue  is to reduce the value of 'foldnestmax'.
     "             " By default  it's 20 (which is  the deepest level of  nested folds that
-    "             " Vim can produce with these 2 methods  anyway). If you set it to 1, Vim
+    "             " Vim can produce with these 2 methods  anyway).  If you set it to 1, Vim
     "             " will only produce folds for the outermost blocks (functions/methods).
     "            "}}}
     "             set foldclose=all
@@ -353,7 +360,7 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
     "             set foldlevel=0
     "         elseif !a:enable && &foldopen is# 'all'
     "             for op in keys(s:fold_options_save)
-    "                 exe 'let &fold'..op..' = s:fold_options_save.'..op
+    "                 exe 'let &fold' .. op .. ' = s:fold_options_save.' .. op
     "             endfor
     "             norm! zMzv
     "             unlet! s:fold_options_save
@@ -444,14 +451,13 @@ fu s:move_and_open_fold(lhs, cnt) abort
         if (is_in_a_closed_fold || level_changed) && s:does_not_distract_in_goyo()
             " `sil!` to make sure all the keys are pressed, even if an error occurs
             sil! norm! gjzRgkzMzv
-            "}}}
             if get(g:, 'in_goyo_mode', 0) | call s:fix_winline(old_winline, 'k') | endif
         endif
     else
         " We want to pass a count if we've pressed `123G`.
         " But we don't want any count if we've just pressed `G`.
         let cnt = a:cnt ? a:cnt : ''
-        sil! exe 'norm! zR'..cnt..s:AOF_LHS2NORM[a:lhs]..'zMzv'
+        sil! exe 'norm! zR' .. cnt .. s:AOF_LHS2NORM[a:lhs] .. 'zMzv'
     endif
 endfu
 
@@ -463,8 +469,8 @@ fu s:does_not_distract_in_goyo() abort
     endif
     let cml = matchstr(&l:cms, '\S*\ze\s*%s')
     " note that we allow opening numbered folds (because usually those can contain code)
-    let fmr = '\%('..join(split(&l:fmr, ','), '\|')..'\)'
-    return getline('.') !~# '^\s*\V'..escape(cml, '\')..'\m.*'..fmr..'$'
+    let fmr = '\%(' .. split(&l:fmr, ',')->join('\|') .. '\)'
+    return getline('.') !~# '^\s*\V' .. escape(cml, '\') .. '\m.*' .. fmr .. '$'
 endfu
 
 fu s:fix_winline(old, dir) abort
@@ -476,7 +482,7 @@ fu s:fix_winline(old, dir) abort
         if a:old > (&so + 1)
             norm! zt
             let new = (a:old - 1) - (&so + 1)
-            if new != 0 | exe 'norm! '..new.."\<c-y>" | endif
+            if new != 0 | exe 'norm! ' .. new .. "\<c-y>" | endif
         " a:old == (&so + 1)
         else
             norm! zt
@@ -488,7 +494,7 @@ fu s:fix_winline(old, dir) abort
         if a:old < (winheight(0) - &so)
             norm! zt
             let new = (a:old + 1) - (&so + 1)
-            if new != 0 | exe 'norm! '..new.."\<c-y>" | endif
+            if new != 0 | exe 'norm! ' .. new .. "\<c-y>" | endif
         " a:old == (winheight(0) - &so)
         else
             norm! zb
@@ -517,7 +523,7 @@ fu s:conceallevel(enable) abort "{{{2
         "}}}
         let &l:cole = &ft is# 'markdown' ? 2 : 3
     endif
-    echo '[conceallevel] '..&l:cole
+    echo '[conceallevel] ' .. &l:cole
 endfu
 
 fu s:edit_help_file(allow) "{{{2
@@ -534,10 +540,10 @@ fu s:edit_help_file(allow) "{{{2
             u
         END
         for key in keys
-            exe 'sil unmap <buffer> '..key
+            exe 'sil unmap <buffer> ' .. key
         endfor
 
-        for pat in map(keys, {_,v -> '|\s*exe\s*''[nx]unmap\s*<buffer>\s*'..v.."'"})
+        for pat in map(keys, {_, v -> '|\s*exe\s*''[nx]unmap\s*<buffer>\s*' .. v .. "'"})
             let b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
         endfor
 
@@ -553,19 +559,19 @@ fu s:edit_help_file(allow) "{{{2
 endfu
 
 fu s:formatprg(scope) abort "{{{2
-    if a:scope is# 'local' && &l:fp is# ''
+    if a:scope is# 'local' && &l:fp == ''
         let bufnr = bufnr('%')
         if has_key(s:fp_save, bufnr)
             let &l:fp = s:fp_save[bufnr]
             unlet! s:fp_save[bufnr]
         endif
-    elseif a:scope is# 'global' && &l:fp isnot# ''
+    elseif a:scope is# 'global' && &l:fp != ''
         " save the local value on a per-buffer basis
         let s:fp_save[bufnr('%')] = &l:fp
         " clear the local value so that the global one is used
         set fp<
     endif
-    echo '[formatprg] '..(!empty(&l:fp) ? &l:fp..' (local)' : &g:fp..' (global)')
+    echo '[formatprg] ' .. (!empty(&l:fp) ? &l:fp .. ' (local)' : &g:fp .. ' (global)')
 endfu
 
 fu s:hl_yanked_text(action) abort "{{{2
@@ -594,19 +600,19 @@ fu s:auto_hl_yanked_text() abort
         let type = v:event.regtype
         if type is# 'v'
             let text = join(text, "\n")
-            let pat = '\%'..line('.')..'l\%'..virtcol('.')..'v\_.\{'..strchars(text, 1)..'}'
+            let pat = '\%' .. line('.') .. 'l\%' .. virtcol('.') .. 'v\_.\{' .. strchars(text, 1) .. '}'
         elseif type is# 'V'
-            let pat = '\%'..line('.')..'l\_.*\%'..(line('.')+len(text)-1)..'l'
-        elseif type =~# "\<c-v>"..'\d\+'
-            let width = matchstr(type, "\<c-v>"..'\zs\d\+')
+            let pat = '\%' .. line('.') .. 'l\_.*\%' .. (line('.') + len(text) - 1) .. 'l'
+        elseif type =~# "\<c-v>" .. '\d\+'
+            let width = matchstr(type, "\<c-v>" .. '\zs\d\+')
             let [line, vcol] = [line('.'), virtcol('.')]
-            let pat = join(map(text, {i -> '\%'..(line+i)..'l\%'..vcol..'v.\{'..width..'}'}), '\|')
+            let pat = map(text, {i -> '\%' .. (line+i) .. 'l\%' .. vcol .. 'v.\{' .. width .. '}'})->join('\|')
         endif
 
         let id = matchadd('IncSearch', pat, 0, -1)
         call timer_start(s:HL_TIME, {-> exists('id') ? matchdelete(id) : ''})
     catch
-        return lg#catch()
+        return s:Catch()
     endtry
 endfu
 
@@ -628,10 +634,10 @@ fu s:lightness(less) abort "{{{2
         "     ┌ new value of `n`
         "     │     ┌ old value of `n`
         "     │     │
-        "     n2 = (n1+1)%(p+1)
-        "           ├──┘ ├────┘
-        "           │    └ but don't go above `p`
-        "           │      read this as:  “p+1 is off-limit”
+        "     n2 = (n1 + 1) % (p + 1)
+        "           ├────┘  ├───────┘
+        "           │       └ but don't go above `p`
+        "           │         read this as:  “p+1 is off-limit”
         "           │
         "           └ increment
         "
@@ -644,22 +650,22 @@ fu s:lightness(less) abort "{{{2
         "     ┌ old distance between `n` and `a`
         "     │     ┌ new distance
         "     │     │
-        "     d2 = (d1+1)%(p+1)
+        "     d2 = (d1 + 1) % (p + 1)
         "
-        "     ⇔ d2 = (d1+1)%(p+1)
-        "     ⇔ n2 - a = (n1-a +1)%(p+1)
+        "     ⇔ d2 = (d1 + 1) % (p + 1)
+        "     ⇔ n2 - a = (n1 - a + 1) % (p + 1)
         "
         "            ┌ final formula
-        "            ├────────────────┐
-        "     ⇔ n2 = (n1-a +1)%(p+1) +a
-        "             ├─────┘ ├────┘ ├┘
-        "             │       │      └ we want the distance from 0, not from `a`; so add `a`
-        "             │       └ but don't go too far
-        "             └ move away (+1) from `a` (n1-a)
+        "            ├────────────────────────┐
+        "     ⇔ n2 = (n1 - a + 1) % (p + 1) + a
+        "             ├────────┘  ├───────┘ ├─┘
+        "             │           │         └ we want the distance from 0, not from `a`; so add `a`
+        "             │           └ but don't go too far
+        "             └ move away (+ 1) from `a` (n1 - a)
         "}}}
         let g:seoul256_light_background = a:less
-            \ ? 256 - (256 - g:seoul256_light_background +1)%(4+1)
-            \ : (g:seoul256_light_background - 252 + 1)%(4+1) + 252
+            \ ? 256 - (256 - g:seoul256_light_background + 1) % (4 + 1)
+            \ : (g:seoul256_light_background - 252 + 1) % (4 + 1) + 252
 
         " update colorscheme
         colo seoul256-light
@@ -673,32 +679,32 @@ fu s:lightness(less) abort "{{{2
         " We need to make `g:seoul256_background` cycle through `[233, 239]`.
         " How to make a number cycle through `[a+p, a+p-1, ..., a]`?{{{
         "
-        " We want to cycle from `a+p` down to `a`.
+        " We want to cycle from `a + p` down to `a`.
         "
-        " Let's use the formula `(d+1)%(p+1)` to update the *distance* between `n` and `a+p`:
+        " Let's use the formula `(d + 1) % (p + 1)` to update the *distance* between `n` and `a+p`:
         "
-        "           d2 = (d1+1)%(p+1)
-        "     ⇔ a+p - n2 = (a+p-n1 +1)%(p+1)
+        "               d2 = (d1 + 1) % (p + 1)
+        "     ⇔ a + p - n2 = (a + p - n1 + 1) % (p + 1)
         "
         "            ┌ final formula
-        "            ├─────────────────────┐
-        "     ⇔ n2 = a+p - (a+p-n1 +1)%(p+1)
-        "            ├─┘    ├───────┘ ├────┘
-        "            │      │         └ but don't go too far
-        "            │      │
-        "            │      └ move away (+1) from `a+p` (a+p - n1)
+        "            ├────────────────────────────────┐
+        "     ⇔ n2 = a + p - (a + p - n1 + 1) % (p + 1)
+        "            ├───┘    ├────────────┘  ├───────┘
+        "            │        │               └ but don't go too far
+        "            │        │
+        "            │        └ move away (+ 1) from `a + p` (a + p - n1)
         "            │
-        "            └ we want the distance from 0, not from `a+p`, so add `a+p`
+        "            └ we want the distance from 0, not from `a + p`, so add `a + p`
         "}}}
         let g:seoul256_background = a:less
-            \ ? 239 - (239 - g:seoul256_background +1)%(6+1)
-            \ : (g:seoul256_background - 233 + 1)%(6+1) + 233
+            \ ? 239 - (239 - g:seoul256_background + 1) % (6 + 1)
+            \ : (g:seoul256_background - 233 + 1) % (6 + 1) + 233
 
         colo seoul256
         let level = g:seoul256_background - 233 + 1
     endif
 
-    call timer_start(0, {-> execute('echo "[lightness]"'..level, '')})
+    call timer_start(0, {-> execute('echo "[lightness]"' .. level, '')})
 endfu
 
 fu s:matchparen(enable) abort "{{{2
@@ -740,7 +746,7 @@ fu s:matchparen(enable) abort "{{{2
         NoMatchParen
         call plugin#matchparen#install_dummy_autocmds()
     endif
-    echo '[matchparen] '..(g:matchup_matchparen_enabled ? 'ON' : 'OFF')
+    echo '[matchparen] ' .. (g:matchup_matchparen_enabled ? 'ON' : 'OFF')
 endfu
 
 fu s:scrollbind(enable) abort "{{{2
@@ -899,14 +905,14 @@ call s:toggle_settings(
     \ 'a',
     \ 'setl nf+=alpha',
     \ 'setl nf-=alpha',
-    \ 'index(split(&l:nf, ","), "alpha") >= 0',
+    \ 'split(&l:nf, ",")->index("alpha") >= 0',
     \ )
 
 call s:toggle_settings(
     \ 'b',
     \ 'call <sid>showbreak(1)',
     \ 'call <sid>showbreak(0)',
-    \ '&l:sbr isnot# ""',
+    \ '&l:sbr != ""',
     \ )
 
 " Note: The conceal level is not a boolean state.{{{
@@ -933,7 +939,7 @@ call s:toggle_settings(
     \ 'e',
     \ 'call <sid>edit_help_file(1)',
     \ 'call <sid>edit_help_file(0)',
-    \ '&bt is# ""',
+    \ '&bt == ""',
     \ )
 
 " Note: The lightness is not a boolean state.{{{
@@ -965,7 +971,7 @@ call s:toggle_settings(
     \ 'm',
     \ 'call <sid>synmaxcol(1)',
     \ 'call <sid>synmaxcol(0)',
-    \ '&l:smc == '..s:SMC_BIG,
+    \ '&l:smc == ' .. s:SMC_BIG,
     \ )
 
 " Alternative:{{{
@@ -987,11 +993,11 @@ call s:toggle_settings(
 "         " So, we include it, and give it a value which brings us to state '11'.
 "
 "         exe {
-"           \   '00' : 'setl nu | setl rnu',
-"           \   '11' : 'setl nornu',
-"           \   '01' : 'setl nonu',
-"           \   '10' : 'setl nonu | setl nornu',
-"           \ }[&l:nu..&l:rnu]
+"             \   '00' : 'setl nu | setl rnu',
+"             \   '11' : 'setl nornu',
+"             \   '01' : 'setl nonu',
+"             \   '10' : 'setl nonu | setl nornu',
+"             \ }[&l:nu .. &l:rnu]
 "     endfu
 "}}}
 call s:toggle_settings(
@@ -1014,7 +1020,7 @@ call s:toggle_settings(
     \ 'q',
     \ 'call <sid>formatprg("local")',
     \ 'call <sid>formatprg("global")',
-    \ '&l:fp isnot# ""',
+    \ '&l:fp != ""',
     \ )
 
 call s:toggle_settings(
@@ -1057,6 +1063,6 @@ call s:toggle_settings(
     \ 'z',
     \ 'call toggle_settings#auto_open_fold(1)',
     \ 'call toggle_settings#auto_open_fold(0)',
-    \ 'get(maparg("j", "n", 0, 1), "rhs", "") =~# "move_and_open_fold"'
+    \ 'maparg("j", "n", 0, 1)->get("rhs", "") =~# "move_and_open_fold"'
     \ )
 
