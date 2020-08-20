@@ -156,15 +156,15 @@ let g:autoloaded_toggle_settings = 1
 "
 " From `:h 'sbo`:
 "
-" >     jump      Applies to the offset between two windows for vertical
-" >               scrolling.  This offset is the difference in the first
-" >               displayed line of the bound windows.
+"    > jump      Applies to the offset between two windows for vertical
+"    >           scrolling.  This offset is the difference in the first
+"    >           displayed line of the bound windows.
 "
 " And from `:h scrollbind-relative`:
 "
-" >     Each 'scrollbind' window keeps track of its "relative offset," which can be
-" >     thought of as the difference between the current window's vertical scroll
-" >     position and the other window's vertical scroll position.
+"    > Each 'scrollbind' window keeps track of its "relative offset," which can be
+"    > thought of as the difference between the current window's vertical scroll
+"    > position and the other window's vertical scroll position.
 "}}}
 " What's the effect of the `jump` flag in `'sbo'`?{{{
 "
@@ -249,10 +249,6 @@ augroup hl_yanked_text | au!
 augroup END
 
 " Functions {{{1
-fu toggle_settings#_() abort "{{{2
-    " dummy function used in our vimrc to source this script once, and not twice
-endfu
-
 fu s:toggle_settings(...) abort "{{{2
     if index([2, 4], a:0) == -1 | return | endif
 
