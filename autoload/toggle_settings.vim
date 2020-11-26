@@ -266,9 +266,9 @@ fu s:toggle_settings(...) abort "{{{2
             \ .. '<bar>    exe ' .. string(cmd1)
             \ .. '<bar>endif'
 
-        exe 'nno <silent><unique> [o' .. letter .. ' :<c-u>' .. cmd1 .. '<cr>'
-        exe 'nno <silent><unique> ]o' .. letter .. ' :<c-u>' .. cmd2 .. '<cr>'
-        exe 'nno <silent><unique> co' .. letter .. ' :<c-u>' .. rhs3 .. '<cr>'
+        exe 'nno <unique> [o' .. letter .. ' <cmd>' .. cmd1 .. '<cr>'
+        exe 'nno <unique> ]o' .. letter .. ' <cmd>' .. cmd2 .. '<cr>'
+        exe 'nno <unique> co' .. letter .. ' <cmd>' .. rhs3 .. '<cr>'
 
     elseif a:0 == 4
         let [letter, cmd1, cmd2, test] = a:000
@@ -279,9 +279,9 @@ fu s:toggle_settings(...) abort "{{{2
             \ .. '<bar>    exe ' .. string(cmd1)
             \ .. '<bar>endif'
 
-        exe 'nno <silent><unique> [o' .. letter .. ' :<c-u>' .. cmd1 .. '<cr>'
-        exe 'nno <silent><unique> ]o' .. letter .. ' :<c-u>' .. cmd2 .. '<cr>'
-        exe 'nno <silent><unique> co' .. letter .. ' :<c-u>' .. rhs3 .. '<cr>'
+        exe 'nno <unique> [o' .. letter .. ' <cmd>' .. cmd1 .. '<cr>'
+        exe 'nno <unique> ]o' .. letter .. ' <cmd>' .. cmd2 .. '<cr>'
+        exe 'nno <unique> co' .. letter .. ' <cmd>' .. rhs3 .. '<cr>'
     endif
 endfu
 
@@ -316,7 +316,7 @@ fu toggle_settings#auto_open_fold(enable) abort "{{{2
             " command-line.
             "}}}
             exe printf(
-                \ 'nno <buffer><nowait><silent> %s :<c-u>call <sid>move_and_open_fold(%s, %d)<cr>',
+                \ 'nno <buffer><nowait> %s <cmd>call <sid>move_and_open_fold(%s, %d)<cr>',
                 \     lhs,
                 \     substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')->string(),
                 \     v:count,
@@ -528,7 +528,7 @@ fu s:edit_help_file(allow) "{{{2
     if a:allow && &bt is# 'help'
         setl ma noro bt=
 
-        nno <buffer><nowait><silent> <cr> 80<bar>
+        nno <buffer><nowait> <cr> 80<bar>
 
         let keys =<< trim END
             p
@@ -979,7 +979,7 @@ call s:toggle_settings(
 "
 " ---
 "
-"     nno <silent> con :<c-u>call <sid>numbers()<cr>
+"     nno con <cmd>call <sid>numbers()<cr>
 "
 "     fu s:numbers() abort
 "         " The key '01' (state) is not necessary because no command in the dictionary
