@@ -8,7 +8,7 @@ let g:loaded_toggle_settings = 1
 " `MyFlags` is only fired once; when `VimEnter` itself is fired.
 " Installing the autocmd *after* `VimEnter` is useless.
 "}}}
-augroup hoist_toggle_settings | au!
+augroup HoistToggleSettings | au!
     let s:sfile = expand('<sfile>:p') .. ':'
     au User MyFlags call statusline#hoist('global',
         \ '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6, s:sfile .. expand('<sflnum>'))
