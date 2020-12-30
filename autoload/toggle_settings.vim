@@ -740,7 +740,7 @@ fu s:matchparen(enable) abort "{{{2
         " Same answer as previously.
         "}}}
         NoMatchParen
-        call plugin#matchparen#install_dummy_autocmds()
+        call plugin#matchparen#installDummyAutocmds()
     endif
     echo '[matchparen] ' .. (g:matchup_matchparen_enabled ? 'ON' : 'OFF')
 endfu
@@ -789,7 +789,7 @@ fu s:virtualedit(enable) abort "{{{2
     if a:enable
         set ve=all
     else
-        let &ve = get(g:, 'orig_virtualedit', &ve)
+        let &ve = get(g:, '_ORIG_VIRTUALEDIT', &ve)
     endif
 endfu
 
