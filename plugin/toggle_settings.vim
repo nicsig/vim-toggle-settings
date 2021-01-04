@@ -11,7 +11,7 @@ let g:loaded_toggle_settings = 1
 augroup HoistToggleSettings | au!
     let s:sfile = expand('<sfile>:p') .. ':'
     au User MyFlags call statusline#hoist('global',
-        \ '%{get(g:, "my_verbose_errors", 0) ? "[Verb]" : ""}', 6, s:sfile .. expand('<sflnum>'))
+        \ '%{get(g:, "my_verbose_errors", v:false) ? "[Verb]" : ""}', 6, s:sfile .. expand('<sflnum>'))
     au User MyFlags call statusline#hoist('buffer',
         \ '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45, s:sfile .. expand('<sflnum>'))
     au User MyFlags call statusline#hoist('buffer',

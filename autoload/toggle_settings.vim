@@ -596,7 +596,7 @@ fu s:auto_hl_yanked_text() abort
         let type = v:event.regtype
         if type is# 'v'
             let text = join(text, "\n")
-            let pat = '\%' .. line('.') .. 'l\%' .. virtcol('.') .. 'v\_.\{' .. strchars(text, 1) .. '}'
+            let pat = '\%' .. line('.') .. 'l\%' .. virtcol('.') .. 'v\_.\{' .. strchars(text, v:true) .. '}'
         elseif type is# 'V'
             let pat = '\%' .. line('.') .. 'l\_.*\%' .. (line('.') + len(text) - 1) .. 'l'
         elseif type =~# "\<c-v>" .. '\d\+'
@@ -873,9 +873,9 @@ call s:toggle_settings(
 
 call s:toggle_settings(
     \ 'V',
-    \ 'let g:my_verbose_errors = 1<bar>redrawt',
-    \ 'let g:my_verbose_errors = 0<bar>redrawt',
-    \ 'get(g:, "my_verbose_errors", 0) == 1',
+    \ 'let g:my_verbose_errors = v:true<bar>redrawt',
+    \ 'let g:my_verbose_errors = v:false<bar>redrawt',
+    \ 'get(g:, "my_verbose_errors", v:false)',
     \ )
 
 " it's useful to temporarily disable `'wrapscan'` before executing a recursive macro,
