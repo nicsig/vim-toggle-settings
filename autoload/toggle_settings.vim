@@ -1035,9 +1035,9 @@ call s:toggle_settings(
 
 call s:toggle_settings(
     \ 't',
-    \ 'let b:foldtitle_full=1 <bar> redraw!',
-    \ 'let b:foldtitle_full=0 <bar> redraw!',
-    \ 'get(b:, "foldtitle_full", 0)',
+    \ 'let b:foldtitle_full=v:true <bar> redraw!',
+    \ 'let b:foldtitle_full=v:false <bar> redraw!',
+    \ 'get(b:, "foldtitle_full", v:false)',
     \ )
 
 call s:toggle_settings(
