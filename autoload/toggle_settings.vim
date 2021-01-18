@@ -623,7 +623,7 @@ def AutoHlYankedText()
         if type == 'v'
             text = join(text, "\n")
             pat = '\%' .. line('.') .. 'l\%' .. virtcol('.') .. 'v'
-                .. '\_.\{' .. strchars(text, v:true) .. '}'
+                .. '\_.\{' .. strchars(text, true) .. '}'
         elseif type == 'V'
             pat = '\%' .. line('.') .. 'l\_.*\%' .. (line('.') + len(text) - 1) .. 'l'
         elseif type =~ "\<c-v>" .. '\d\+'
