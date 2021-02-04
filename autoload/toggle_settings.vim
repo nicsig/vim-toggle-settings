@@ -292,7 +292,7 @@ enddef
 
 def toggle_settings#autoOpenFold(enable: bool) #{{{2
     if enable && !exists('b:auto_open_fold_mappings')
-        if foldclosed('.') != -1
+        if foldclosed('.') >= 0
             norm! zvzz
         endif
         b:auto_open_fold_mappings = keys(AOF_LHS2NORM)->MapSave('n', true)
@@ -425,7 +425,7 @@ def MoveAndOpenFold(lhs: string, cnt: number)
         if &ft == 'markdown' && getline('.') =~ '^#\+$'
             return
         endif
-        var is_in_a_closed_fold: bool = foldclosed('.') != -1
+        var is_in_a_closed_fold: bool = foldclosed('.') >= 0
         var new_foldlevel: number = foldlevel('.')
         var level_changed: bool = new_foldlevel != old_foldlevel
         # need to  check `level_changed` to handle  the case where we  move from
@@ -450,7 +450,7 @@ def MoveAndOpenFold(lhs: string, cnt: number)
         if &ft == 'markdown' && getline('.') =~ '^#\+$'
             return
         endif
-        var is_in_a_closed_fold: bool = foldclosed('.') != -1
+        var is_in_a_closed_fold: bool = foldclosed('.') >= 0
         var new_foldlevel: number = foldlevel('.')
         var level_changed: bool = new_foldlevel != old_foldlevel
         # need to  check `level_changed` to handle  the case where we  move from
