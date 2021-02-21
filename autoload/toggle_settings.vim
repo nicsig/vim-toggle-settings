@@ -225,7 +225,10 @@ var loaded = true
 # Init {{{1
 
 import Catch from 'lg.vim'
-import {MapSave, MapRestore} from 'lg/map.vim'
+import {
+    MapSave,
+    MapRestore,
+    } from 'lg/map.vim'
 
 const AOF_LHS2NORM: dict<string> = {
     j: 'j',
@@ -563,13 +566,19 @@ def EditHelpFile(allow: bool) #{{{2
             exe 'sil unmap <buffer> ' .. key
         endfor
 
-        for pat in map(keys, (_, v) => '|\s*exe\s*''[nx]unmap\s*<buffer>\s*' .. v .. "'")
+        for pat in keys
+            ->map((_, v: string): string => '|\s*exe\s*''[nx]unmap\s*<buffer>\s*' .. v .. "'")
             b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
         endfor
 
         echo 'you CAN edit the file'
 
     elseif !allow && &bt != 'help'
+        if &modified
+            Error('save the buffer first')
+            return
+        endif
+        #
         # don't reload the buffer before setting `'bt'`; it would change the cwd (`vim-cwd`)
         setl noma ro bt=help
         # reload ftplugin
@@ -630,7 +639,7 @@ def AutoHlYankedText()
             var width: string = matchstr(type, "\<c-v>" .. '\zs\d\+')
             var line: number = line('.')
             var vcol: number = virtcol('.')
-            pat = map(text, (i) =>
+            pat = map(text, (i: number): string =>
                 '\%' .. (line + i) .. 'l\%' .. vcol .. 'v.\{' .. width .. '}'
                 )->join('\|')
         endif
@@ -742,9 +751,7 @@ enddef
 
 def Matchparen(enable: bool) #{{{2
     if !exists('g:matchup_matchparen_enabled')
-        echohl ErrorMsg
-        echo 'matchparen module of matchup plugin not enabled'
-        echohl NONE
+        Error('matchparen module of matchup plugin not enabled')
         return
     endif
 
@@ -853,6 +860,12 @@ def Nowrapscan(enable: bool) #{{{2
     endif
 enddef
 var whichwrap_save: string
+
+def Error(msg: string) #{{{2
+    echohl ErrorMsg
+    echom msg
+    echohl NONE
+enddef
 # }}}1
 # Mappings {{{1
 # 2 "{{{2
