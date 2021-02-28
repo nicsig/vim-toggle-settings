@@ -293,7 +293,7 @@ def ToggleSettings(key: string, option: string, reset = '', test = '') #{{{2
     endif
 enddef
 
-def toggle_settings#autoOpenFold(enable: bool) #{{{2
+def toggleSettings#autoOpenFold(enable: bool) #{{{2
     if enable && !exists('b:auto_open_fold_mappings')
         if foldclosed('.') >= 0
             norm! zvzz
@@ -1092,8 +1092,8 @@ ToggleSettings(
 # Vim uses `z` as a prefix to build all fold-related commands in normal mode.
 ToggleSettings(
     'z',
-    'call toggle_settings#autoOpenFold(v:true)',
-    'call toggle_settings#autoOpenFold(v:false)',
+    'call toggleSettings#autoOpenFold(v:true)',
+    'call toggleSettings#autoOpenFold(v:false)',
     'maparg("j", "n", 0, 1)->get("rhs", "") =~# "MoveAndOpenFold"'
     )
 

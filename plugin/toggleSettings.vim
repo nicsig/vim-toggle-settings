@@ -3,19 +3,25 @@ vim9script noclear
 if exists('loaded') | finish | endif
 var loaded = true
 
+const SFILE: string = expand('<sfile>:p')
+
+# Necessary to be able to load the optional package in our vimrc with:
+#
+#     packadd toggleSettings
+&packpath = SFILE->fnamemodify(':h:h') .. ',' .. &pp
+
 # Don't move this autocmd in `autoload/`.{{{
 #
 # `MyFlags` is only fired once; when `VimEnter` itself is fired.
 # Installing the autocmd *after* `VimEnter` is useless.
 #}}}
 augroup HoistToggleSettings | au!
-    const SFILE: string = expand('<sfile>:p') .. ':'
     au User MyFlags statusline#hoist('global',
-        \ '%{get(g:, "my_verbose_errors", v:false) ? "[Verb]" : ""}', 6, SFILE .. expand('<sflnum>'))
+        \ '%{get(g:, "my_verbose_errors", v:false) ? "[Verb]" : ""}', 6, SFILE .. ':' .. expand('<sflnum>'))
     au User MyFlags statusline#hoist('buffer',
-        \ '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45, SFILE .. expand('<sflnum>'))
+        \ '%{exists("b:auto_open_fold_mappings") ? "[AOF]" : ""}', 45, SFILE .. ':' .. expand('<sflnum>'))
     au User MyFlags statusline#hoist('buffer',
-       \ '%{&l:smc > 999 ? "[smc>999]" : ""}', 46, SFILE .. expand('<sflnum>'))
+       \ '%{&l:smc > 999 ? "[smc>999]" : ""}', 46, SFILE .. ':' .. expand('<sflnum>'))
     # You could also write `split(&l:nf, ",")->index("alpha") >= 0`?{{{
     #
     # But it seems overkill here.
@@ -24,7 +30,7 @@ augroup HoistToggleSettings | au!
     # data.
     #}}}
     au User MyFlags statusline#hoist('buffer',
-        \ '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47, SFILE .. expand('<sflnum>'))
+        \ '%{&l:nf =~# "alpha" ? "[nf~alpha]" : ""}', 47, SFILE .. ':' .. expand('<sflnum>'))
 augroup END
 
-com -bar -bang -nargs=1 FoldAutoOpen toggle_settings#autoOpenFold(<bang>0)
+com -bar -bang -nargs=1 FoldAutoOpen toggleSettings#autoOpenFold(<bang>0)
