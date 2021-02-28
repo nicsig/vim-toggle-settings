@@ -245,10 +245,10 @@ const SMC_BIG: number = 3'000
 
 const HL_TIME: number = 250
 
-var fp_save: dict<string> = {}
+var fp_save: dict<string>
 var hl_yanked_text: bool
-var scb_save: dict<dict<bool>> = {}
-var smc_save: dict<number> = {}
+var scb_save: dict<dict<bool>>
+var smc_save: dict<number>
 
 # Autocmds {{{1
 
