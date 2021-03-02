@@ -326,7 +326,7 @@ def toggleSettings#autoOpenFold(enable: bool) #{{{2
             exe printf(
                 'nno <buffer><nowait> %s <cmd>call <sid>MoveAndOpenFold(%s, %d)<cr>',
                     lhs,
-                    substitute(lhs, '^<\([^>]*>\)$', '<lt>\1', '')->string(),
+                    lhs->substitute('^<\([^>]*>\)$', '<lt>\1', '')->string(),
                     v:count,
                 )
         endfor
@@ -567,8 +567,9 @@ def EditHelpFile(allow: bool) #{{{2
         endfor
 
         for pat in keys
-            ->map((_, v: string): string => '|\s*exe\s*''[nx]unmap\s*<buffer>\s*' .. v .. "'")
-            b:undo_ftplugin = substitute(b:undo_ftplugin, pat, '', 'g')
+                 ->map((_, v: string): string =>
+                        '|\s*exe\s*''[nx]unmap\s*<buffer>\s*' .. v .. "'")
+            b:undo_ftplugin = b:undo_ftplugin->substitute(pat, '', 'g')
         endfor
 
         echo 'you CAN edit the file'
@@ -616,13 +617,11 @@ enddef
 
 def AutoHlYankedText()
     try
-        #  ┌ don't highlight anything if we didn't copy anything
-        #  │
-        #  │                          ┌ don't highlight anything if Vim has copied
-        #  │                          │ the visual selection in `*` after we leave
-        #  │                          │ visual mode
-        #  ├─────────────────────┐    ├────────────────────┐
-        if v:event.operator != 'y' || v:event.regname == '*'
+        # don't highlight anything if we didn't copy anything
+        if v:event.operator != 'y'
+        # don't highlight anything if Vim has copied the visual selection in `*`
+        # after we leave visual mode
+        || v:event.regname == '*'
             return
         endif
 
@@ -639,9 +638,10 @@ def AutoHlYankedText()
             var width: string = matchstr(type, "\<c-v>" .. '\zs\d\+')
             var line: number = line('.')
             var vcol: number = virtcol('.')
-            pat = map(text, (i: number): string =>
-                '\%' .. (line + i) .. 'l\%' .. vcol .. 'v.\{' .. width .. '}'
-                )->join('\|')
+            pat = text
+                ->map((i: number): string =>
+                        '\%' .. (line + i) .. 'l\%' .. vcol .. 'v.\{' .. width .. '}')
+                ->join('\|')
         endif
 
         hl_yanked_text_id = matchadd('IncSearch', pat, 0, -1)
