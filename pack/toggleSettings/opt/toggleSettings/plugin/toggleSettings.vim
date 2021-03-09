@@ -629,9 +629,8 @@ def AutoHlYankedText()
         var type: string = v:event.regtype
         var pat: string
         if type == 'v'
-            text = join(text, "\n")
             pat = '\%' .. line('.') .. 'l\%' .. virtcol('.') .. 'v'
-                .. '\_.\{' .. strchars(text, true) .. '}'
+                .. '\_.\{' .. join(text, "\n")->strchars(true) .. '}'
         elseif type == 'V'
             pat = '\%' .. line('.') .. 'l\_.*\%' .. (line('.') + len(text) - 1) .. 'l'
         elseif type =~ "\<c-v>" .. '\d\+'
@@ -888,7 +887,7 @@ ToggleSettings(
     'C',
     'call <sid>Colorscheme("dark")',
     'call <sid>Colorscheme("light")',
-    '&bg is# "dark"',
+    '&bg ==# "dark"',
     )
 
 ToggleSettings(
